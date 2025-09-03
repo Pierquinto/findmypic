@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth';
+import { getServerUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma'
 
 // Get user profile
 export async function GET(request: NextRequest) {
   try {
-    const authUser = await requireAuth(request)
+    const authUser = await getServerUser(request)
     
     if (!authUser?.id) {
       return NextResponse.json(
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
 // Update user profile
 export async function PUT(req: NextRequest) {
   try {
-    const authUser = await requireAuth(req)
+    const authUser = await getServerUser(req)
     
     if (!authUser?.id) {
       return NextResponse.json(
