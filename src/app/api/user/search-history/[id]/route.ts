@@ -4,10 +4,11 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('API: Getting search with ID:', params.id)
+    const { id } = await params
+    console.log('API: Getting search with ID:', id)
     
     const user = await requireAuth(request)
     
@@ -17,7 +18,6 @@ export async function GET(
     }
 
     console.log('API: User found:', user.email)
-    const { id } = params
 
     // Find the search by ID and verify ownership
     console.log('API: Searching for search ID:', id)

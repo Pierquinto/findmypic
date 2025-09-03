@@ -3,6 +3,7 @@
 import { AlertTriangle, CheckCircle, ExternalLink, Globe, Bookmark, BookmarkCheck } from 'lucide-react'
 import ThumbnailImage from './OptimizedImage'
 import { useState } from 'react'
+import { useAuth } from '@/lib/auth-context'
 
 export interface SearchResultItem {
   id: string
@@ -24,6 +25,7 @@ interface SearchResultsProps {
 }
 
 export default function SearchResults({ results, userPlan = 'free', className = '', searchId }: SearchResultsProps) {
+  const { apiRequest } = useAuth()
   // Filter out results with low similarity (client-side safety check)
   const filteredResults = results.filter(result => result.similarity >= 70)
   
@@ -78,7 +80,7 @@ export default function SearchResults({ results, userPlan = 'free', className = 
     setSavingViolations(prev => new Set(prev).add(result.id))
     
     try {
-      const response = await fetch(`/api/violations?searchResultId=${result.id}`, {
+      const response = await apiRequest(`/api/violations?searchResultId=${result.id}`, {
         method: 'DELETE'
       })
       

@@ -45,7 +45,7 @@ interface Violation {
 }
 
 export default function ViolationsPage() {
-  const { user, loading: authLoading  } = useAuth()
+  const { user, loading: authLoading, apiRequest } = useAuth()
   const [violations, setViolations] = useState<Violation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -101,7 +101,7 @@ export default function ViolationsPage() {
       if (categoryFilter !== 'all') params.append('category', categoryFilter)
       if (searchQuery.trim()) params.append('search', searchQuery.trim())
       
-      const response = await fetch(`/api/violations?${params}`)
+      const response = await apiRequest(`/api/violations?${params}`)
       
       if (!response.ok) {
         throw new Error('Failed to fetch violations')
@@ -134,7 +134,7 @@ export default function ViolationsPage() {
 
   const updateViolationStatus = async (violationId: string, status: string) => {
     try {
-      const response = await fetch(`/api/violations/${violationId}`, {
+      const response = await apiRequest(`/api/violations/${violationId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -153,7 +153,7 @@ export default function ViolationsPage() {
     if (!confirm('Sei sicuro di voler eliminare questa violazione?')) return
     
     try {
-      const response = await fetch(`/api/violations/${violationId}`, {
+      const response = await apiRequest(`/api/violations/${violationId}`, {
         method: 'DELETE'
       })
       

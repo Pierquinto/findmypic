@@ -42,7 +42,7 @@ interface FilterState {
 }
 
 export default function HistoryPage() {
-  const { user, loading: authLoading  } = useAuth()
+  const { user, loading: authLoading, apiRequest } = useAuth()
   const router = useRouter()
   const [searches, setSearches] = useState<SearchHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,7 +75,7 @@ export default function HistoryPage() {
         }, {} as Record<string, string>)
       })
 
-      const response = await fetch(`/api/user/search-history?${params}`)
+      const response = await apiRequest(`/api/user/search-history?${params}`)
       if (response.ok) {
         const data = await response.json()
         

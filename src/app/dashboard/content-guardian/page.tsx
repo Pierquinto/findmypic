@@ -52,7 +52,7 @@ interface MonitoringResult {
 }
 
 export default function ContentGuardianPage() {
-  const { user, loading: authLoading  } = useAuth()
+  const { user, loading: authLoading, apiRequest } = useAuth()
   const [assets, setAssets] = useState<ProtectedAsset[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -146,7 +146,7 @@ export default function ContentGuardianPage() {
 
   const toggleMonitoring = async (assetId: string, enabled: boolean) => {
     try {
-      const response = await fetch(`/api/user/protected-assets/${assetId}`, {
+      const response = await apiRequest(`/api/user/protected-assets/${assetId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ monitoringEnabled: enabled })
@@ -162,7 +162,7 @@ export default function ContentGuardianPage() {
 
   const runManualCheck = async (assetId: string) => {
     try {
-      const response = await fetch(`/api/user/protected-assets/${assetId}/check`, {
+      const response = await apiRequest(`/api/user/protected-assets/${assetId}/check`, {
         method: 'POST'
       })
 
@@ -178,7 +178,7 @@ export default function ContentGuardianPage() {
     if (!confirm('Sei sicuro di voler eliminare questo asset protetto?')) return
 
     try {
-      const response = await fetch(`/api/user/protected-assets/${assetId}`, {
+      const response = await apiRequest(`/api/user/protected-assets/${assetId}`, {
         method: 'DELETE'
       })
 

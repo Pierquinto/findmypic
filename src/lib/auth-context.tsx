@@ -43,6 +43,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const profile = await response.json()
         setUserProfile(profile)
+      } else {
+        const errorText = await response.text()
+        console.error('Profile fetch failed:', response.status, errorText)
       }
     } catch (error) {
       console.error('Error fetching user profile:', error)
@@ -53,11 +56,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Get initial session
     const getInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
+      console.log('Initial session:', session) // Debug log
       setSession(session)
       setUser(session?.user ?? null)
       
       if (session?.user?.id && session?.access_token) {
+        console.log('Initial fetch user profile with token:', session.access_token?.substring(0, 20) + '...')
         await fetchUserProfile(session.user.id, session.access_token)
+      } else {
+        console.log('No initial session or access token')
       }
       
       setLoading(false)
@@ -69,12 +76,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email)
+        console.log('Session:', session) // Debug log
         setSession(session)
         setUser(session?.user ?? null)
         
         if (session?.user?.id && session?.access_token) {
+          console.log('Fetching user profile with token:', session.access_token?.substring(0, 20) + '...')
           await fetchUserProfile(session.user.id, session.access_token)
         } else {
+          console.log('No session or access token available')
           setUserProfile(null)
         }
         

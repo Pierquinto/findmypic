@@ -25,7 +25,7 @@ interface SearchData {
 export default function SearchResultPage() {
   const { id } = useParams()
   const router = useRouter()
-  const { user, loading: authLoading  } = useAuth()
+  const { user, loading: authLoading, apiRequest } = useAuth()
   const [searchData, setSearchData] = useState<SearchData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -39,7 +39,7 @@ export default function SearchResultPage() {
   const loadSearchData = async (searchId: string) => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/user/search-history/${searchId}`)
+      const response = await apiRequest(`/api/user/search-history/${searchId}`)
       
       if (response.ok) {
         const data = await response.json()

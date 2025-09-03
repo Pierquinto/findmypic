@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,30 +8,29 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  password    String
-  plan        String   @default("free")
-  searches    Int      @default(0)
-  searchesResetAt DateTime @default(now())
-  customSearchLimit Int?  // Limite personalizzato (override del piano)
-  role        String   @default("user")
-  permissions Json?
-  isActive    Boolean  @default(true)
-  isAdmin     Boolean  @default(false)
-  lastLoginAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  Search       Search[]
-  Subscription Subscription[]
-  ActivityLog  ActivityLog[]
+  id                  String                @id @default(cuid())
+  email               String                @unique
+  password            String
+  plan                String                @default("free")
+  searches            Int                   @default(0)
+  searchesResetAt     DateTime              @default(now())
+  customSearchLimit   Int?
+  role                String                @default("user")
+  permissions         Json?
+  isActive            Boolean               @default(true)
+  isAdmin             Boolean               @default(false)
+  lastLoginAt         DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  ActivityLog         ActivityLog[]
   CustomSearchRequest CustomSearchRequest[]
-  SearchLog    SearchLog[]
-  profile      UserProfile?
-  protectedAssets ProtectedAsset[]
-  violations   Violation[]
-  imageTokens  ImageToken[]
+  imageTokens         ImageToken[]
+  protectedAssets     ProtectedAsset[]
+  Search              Search[]
+  SearchLog           SearchLog[]
+  Subscription        Subscription[]
+  profile             UserProfile?
+  violations          Violation[]
 }
 
 model UserProfile {
@@ -48,83 +44,78 @@ model UserProfile {
   bio       String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ProtectedAsset {
-  id            String   @id @default(cuid())
-  userId        String
-  name          String   // Nome dato dall'utente all'asset
-  description   String?  // Descrizione opzionale
-  imageUrl      String   // URL dell'immagine protetta
-  imageHash     String   // Hash per identificazione
-  tags          Json?    // Tag per categorizzazione
-  monitoringEnabled Boolean @default(true)
-  monitoringFrequency String @default("weekly") // daily, weekly, monthly
-  lastMonitoredAt DateTime?
-  totalViolations Int @default(0)
-  status        String   @default("active") // active, paused, archived
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  monitoringResults AssetMonitoringResult[]
+  id                  String                  @id @default(cuid())
+  userId              String
+  name                String
+  description         String?
+  imageUrl            String
+  imageHash           String
+  tags                Json?
+  monitoringEnabled   Boolean                 @default(true)
+  monitoringFrequency String                  @default("weekly")
+  lastMonitoredAt     DateTime?
+  totalViolations     Int                     @default(0)
+  status              String                  @default("active")
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  monitoringResults   AssetMonitoringResult[]
+  user                User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model AssetMonitoringResult {
-  id                String   @id @default(cuid())
-  protectedAssetId  String
-  monitoringDate    DateTime
-  violationsFound   Int      @default(0)
-  newViolations     Int      @default(0)
-  resolvedViolations Int      @default(0)
-  results          Json?    // Risultati dettagliati delle violazioni
-  status           String   @default("completed") // completed, failed, processing
-  createdAt        DateTime @default(now())
-  
-  protectedAsset ProtectedAsset @relation(fields: [protectedAssetId], references: [id], onDelete: Cascade)
+  id                 String         @id @default(cuid())
+  protectedAssetId   String
+  monitoringDate     DateTime
+  violationsFound    Int            @default(0)
+  newViolations      Int            @default(0)
+  resolvedViolations Int            @default(0)
+  results            Json?
+  status             String         @default("completed")
+  createdAt          DateTime       @default(now())
+  protectedAsset     ProtectedAsset @relation(fields: [protectedAssetId], references: [id], onDelete: Cascade)
 }
 
 model Search {
-  id               String   @id @default(cuid())
-  userId           String?
-  imageUrl         String?  // URL dell'immagine originale
-  encryptedImagePath String? // Path crittografato per storage sicuro
-  encryptedResults String? // Risultati crittografati completi
-  searchType       String   @default("general_search")
-  providersUsed    Json?
-  searchTime       Int?     // in milliseconds
-  resultsCount     Int      @default(0)
-  ipAddress        String?  // IP crittografato
-  userAgent        String?  // User agent crittografato
-  imageHash        String?  // Hash dell'immagine per identificazione
-  status           String   @default("completed") // completed, failed, processing
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  
-  user             User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  results          SearchResult[]
-  searchLogs       SearchLog[]
-  imageTokens      ImageToken[]
+  id                 String         @id @default(cuid())
+  userId             String?
+  imageUrl           String?
+  encryptedImagePath String?
+  encryptedResults   String?
+  searchType         String         @default("general_search")
+  providersUsed      Json?
+  searchTime         Int?
+  resultsCount       Int            @default(0)
+  ipAddress          String?
+  userAgent          String?
+  imageHash          String?
+  status             String         @default("completed")
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  imageTokens        ImageToken[]
+  user               User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  searchLogs         SearchLog[]
+  results            SearchResult[]
 }
 
 model SearchResult {
-  id           String   @id @default(cuid())
-  searchId     String
-  url          String
-  siteName     String
-  title        String?
-  similarity   Float
-  status       String   // violation, partial, clean
-  thumbnail    String?
-  provider     String
-  metadata     Json?    // Additional provider-specific data
-  detectedAt   DateTime @default(now())
-  createdAt    DateTime @default(now())
-  
-  search       Search   @relation(fields: [searchId], references: [id], onDelete: Cascade)
-  
+  id         String   @id @default(cuid())
+  searchId   String
+  url        String
+  siteName   String
+  title      String?
+  similarity Float
+  status     String
+  thumbnail  String?
+  provider   String
+  metadata   Json?
+  detectedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  search     Search   @relation(fields: [searchId], references: [id], onDelete: Cascade)
+
   @@index([searchId])
   @@index([status])
   @@index([similarity])
@@ -137,46 +128,43 @@ model ImageToken {
   userId    String
   expiresAt DateTime
   createdAt DateTime @default(now())
-  
   search    Search   @relation(fields: [searchId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   @@index([token])
   @@index([expiresAt])
 }
 
 model Subscription {
-  id              String    @id @default(cuid())
-  userId          String
-  plan            String
-  status          String    // active, canceled, past_due, etc.
-  currentPeriodStart DateTime
-  currentPeriodEnd   DateTime
-  cancelAtPeriodEnd  Boolean   @default(false)
-  stripeCustomerId   String?
+  id                   String   @id @default(cuid())
+  userId               String
+  plan                 String
+  status               String
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean  @default(false)
+  stripeCustomerId     String?
   stripeSubscriptionId String?
-  priceId            String?
-  amount             Int       // in cents
-  currency           String    @default("EUR")
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  
-  user User @relation(fields: [userId], references: [id])
+  priceId              String?
+  amount               Int
+  currency             String   @default("EUR")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id])
 }
 
 model ActivityLog {
-  id          String   @id @default(cuid())
-  userId      String?
-  adminId     String?
-  action      String
-  resource    String
-  resourceId  String?
-  details     Json?
-  ipAddress   String?
-  userAgent   String?
-  createdAt   DateTime @default(now())
-  
-  user  User? @relation(fields: [userId], references: [id])
+  id         String   @id @default(cuid())
+  userId     String?
+  adminId    String?
+  action     String
+  resource   String
+  resourceId String?
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id])
 }
 
 model SystemConfig {
@@ -190,89 +178,80 @@ model SystemConfig {
 }
 
 model CustomSearchRequest {
-  id              String   @id @default(cuid())
-  userId          String?  // Opzionale per utenti non registrati
-  email           String   // Email di contatto
-  name            String?  // Nome del richiedente
-  requestType     String   @default("manual_search") // manual_search, deep_analysis, custom_sites
-  description     String   // Descrizione della richiesta
-  urgencyLevel    String   @default("normal") // low, normal, high, urgent
-  targetSites     Json?    // Siti specifici da monitorare
-  imageHashes     Json?    // Hash delle immagini da cercare
-  additionalInfo  Json?    // Informazioni aggiuntive
-  estimatedCost   Float?   // Costo stimato per la ricerca
-  priority        Int      @default(0) // Priorità nella coda
-  status          String   @default("waiting") // waiting, in_progress, completed, cancelled
-  adminNotes      String?  // Note dell'amministratore
-  completedAt     DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  user            User?    @relation(fields: [userId], references: [id])
+  id             String    @id @default(cuid())
+  userId         String?
+  email          String
+  name           String?
+  requestType    String    @default("manual_search")
+  description    String
+  urgencyLevel   String    @default("normal")
+  targetSites    Json?
+  imageHashes    Json?
+  additionalInfo Json?
+  estimatedCost  Float?
+  priority       Int       @default(0)
+  status         String    @default("waiting")
+  adminNotes     String?
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  user           User?     @relation(fields: [userId], references: [id])
 }
 
 model SearchLog {
-  id                   String   @id @default(cuid())
-  searchId             String   // ID della ricerca associata
-  userId               String?  // ID utente se autenticato
-  email                String?  // Email utente se disponibile
-  imageStoragePath     String?  // Path dove è salvata l'immagine processata
-  imageHash            String?  // Hash dell'immagine
-  imageSize            Int?     // Dimensione file in bytes
-  imageMimeType        String?  // Tipo MIME dell'immagine
-  ipAddress            String?  // IP address dell'utente
-  userAgent            String?  // User agent del browser
-  geoLocation          Json?    // Informazioni geografiche (country, city, etc.)
-  searchType           String   @default("general_search")
-  searchQuery          Json?    // Query di ricerca completa
-  providersAttempted   Json?    // Lista provider tentati
-  providersSuccessful  Json?    // Provider che hanno restituito risultati
-  providersFailed      Json?    // Provider falliti con errori
-  totalResults         Int      @default(0)
-  searchTimeMs         Int?     // Tempo totale ricerca in ms
-  processingSteps      Json?    // Step di processing dettagliati
-  errorLogs            Json?    // Log degli errori se presenti
-  warnings             Json?    // Warnings durante la ricerca
-  apiCallsCount        Int      @default(0) // Numero chiamate API totali
-  status               String   @default("completed") // completed, failed, processing, timeout
-  createdAt            DateTime @default(now())
-  
-  search               Search   @relation(fields: [searchId], references: [id], onDelete: Cascade)
-  user                 User?    @relation(fields: [userId], references: [id])
+  id                  String   @id @default(cuid())
+  searchId            String
+  userId              String?
+  email               String?
+  imageStoragePath    String?
+  imageHash           String?
+  imageSize           Int?
+  imageMimeType       String?
+  ipAddress           String?
+  userAgent           String?
+  geoLocation         Json?
+  searchType          String   @default("general_search")
+  searchQuery         Json?
+  providersAttempted  Json?
+  providersSuccessful Json?
+  providersFailed     Json?
+  totalResults        Int      @default(0)
+  searchTimeMs        Int?
+  processingSteps     Json?
+  errorLogs           Json?
+  warnings            Json?
+  apiCallsCount       Int      @default(0)
+  status              String   @default("completed")
+  createdAt           DateTime @default(now())
+  search              Search   @relation(fields: [searchId], references: [id], onDelete: Cascade)
+  user                User?    @relation(fields: [userId], references: [id])
 }
 
 model Violation {
-  id            String   @id @default(cuid())
-  userId        String
-  searchId      String?  // Optional reference to original search
-  searchResultId String? // Optional reference to original search result
-  title         String   // User-defined title for the violation
-  description   String?  // User description/notes
-  priority      String   @default("medium") // low, medium, high, urgent
-  status        String   @default("pending") // pending, investigating, resolved, dismissed
-  category      String   @default("general") // general, copyright, revenge, harassment, etc.
-  
-  // Violation details
-  imageUrl      String?  // URL of the violating image
-  webPageUrl    String?  // URL of the web page containing the violation
-  siteName      String
-  similarity    Float?   // Similarity score if available
-  provider      String?  // Search provider that found this
-  thumbnail     String?  // Thumbnail URL
-  
-  // Metadata
-  metadata      Json?    // Additional metadata from search results
-  actionsTaken  Json?    // Actions taken by user (contacted site, DMCA, etc.)
-  evidence      Json?    // Screenshots, communications, etc.
-  
-  // Timestamps
-  detectedAt    DateTime? // When the violation was first detected
-  resolvedAt    DateTime? // When the violation was resolved
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id             String    @id @default(cuid())
+  userId         String
+  searchId       String?
+  searchResultId String?
+  title          String
+  description    String?
+  priority       String    @default("medium")
+  status         String    @default("pending")
+  category       String    @default("general")
+  imageUrl       String?
+  webPageUrl     String?
+  siteName       String
+  similarity     Float?
+  provider       String?
+  thumbnail      String?
+  metadata       Json?
+  actionsTaken   Json?
+  evidence       Json?
+  detectedAt     DateTime?
+  resolvedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([status])
   @@index([priority])

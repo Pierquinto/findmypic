@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, supabaseAdmin } from './supabase'
 import { User } from '@supabase/supabase-js'
 
 // Auth functions
@@ -40,21 +40,39 @@ export async function getSession() {
 // Server-side auth helpers
 export async function getServerSession(request: Request) {
   const authHeader = request.headers.get('Authorization')
-  if (!authHeader?.startsWith('Bearer ')) return null
+  
+  if (!authHeader?.startsWith('Bearer ')) {
+    return null
+  }
   
   const token = authHeader.split(' ')[1]
-  const { data: { user }, error } = await supabase.auth.getUser(token)
   
-  if (error || !user) return null
-  return user
+  try {
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
+    
+    if (error || !user) {
+      return null
+    }
+    return user
+  } catch (error) {
+    console.error('Auth error:', error)
+    return null
+  }
 }
 
 export async function requireAuth(request: Request) {
-  const user = await getServerSession(request)
-  if (!user) {
-    throw new Error('Unauthorized')
+  try {
+    const user = await getServerSession(request)
+    if (!user) {
+      console.log('requireAuth: No user found')
+      throw new Error('Unauthorized')
+    }
+    console.log('requireAuth: User found:', user.id)
+    return user
+  } catch (error) {
+    console.error('requireAuth error:', error)
+    throw error
   }
-  return user
 }
 
 // Cookie-based auth for API routes (fallback)
@@ -64,7 +82,7 @@ export async function getServerUser(request: Request) {
     const authHeader = request.headers.get('Authorization')
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.split(' ')[1]
-      const { data: { user }, error } = await supabase.auth.getUser(token)
+      const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
       if (!error && user) return user
     }
 
@@ -78,7 +96,7 @@ export async function getServerUser(request: Request) {
     if (!sessionMatch) return null
 
     const token = decodeURIComponent(sessionMatch[1])
-    const { data: { user }, error } = await supabase.auth.getUser(token)
+    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token)
     
     if (error || !user) return null
     return user
@@ -94,14 +112,14 @@ export async function requireAdmin(request: Request) {
     throw new Error('Unauthorized')
   }
   
-  // Check if user is admin in database
-  const { data: userData, error } = await supabase
-    .from('users')
-    .select('is_admin, role')
-    .eq('id', user.id)
-    .single()
+  // Check if user is admin in database using Prisma
+  const { prisma } = await import('./prisma')
+  const userData = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { isAdmin: true, role: true }
+  })
   
-  if (error || !userData?.is_admin) {
+  if (!userData?.isAdmin) {
     throw new Error('Forbidden: Admin access required')
   }
   

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Globe, AlertCircle } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
 
 interface ThumbnailImageProps {
   src: string
@@ -16,6 +17,7 @@ export default function ThumbnailImage({
   className = '',
   siteName 
 }: ThumbnailImageProps) {
+  const { apiRequest } = useAuth()
   const [imageState, setImageState] = useState<'loading' | 'loaded' | 'error'>('loading')
   const [cleanSrc, setCleanSrc] = useState('')
   const [hasTriedProxy, setHasTriedProxy] = useState(false)
@@ -43,7 +45,7 @@ export default function ThumbnailImage({
       }
       
       // Get a token for the image
-      const tokenResponse = await fetch(`/api/image-token/${searchId}`, {
+      const tokenResponse = await apiRequest(`/api/image-token/${searchId}`, {
         credentials: 'include'
       })
       
