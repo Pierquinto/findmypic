@@ -140,7 +140,7 @@ export default function UsersManagement() {
 
     try {
       // Update profile
-      await fetch(`/api/admin/users/${editingUser.id}`, {
+      await apiRequest(`/api/admin/users/${editingUser.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -153,7 +153,7 @@ export default function UsersManagement() {
       })
 
       // Update search settings
-      await fetch(`/api/admin/users/${editingUser.id}`, {
+      await apiRequest(`/api/admin/users/${editingUser.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -167,7 +167,7 @@ export default function UsersManagement() {
 
       // Update password if provided
       if (editForm.newPassword) {
-        await fetch(`/api/admin/users/${editingUser.id}`, {
+        await apiRequest(`/api/admin/users/${editingUser.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 

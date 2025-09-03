@@ -83,7 +83,7 @@ export default function AnalyticsDashboard() {
 
   const exportReport = async () => {
     try {
-      const response = await fetch(`/api/admin/analytics/export?timeRange=${timeRange}`)
+      const response = await apiRequest(`/api/admin/analytics/export?timeRange=${timeRange}`)
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)

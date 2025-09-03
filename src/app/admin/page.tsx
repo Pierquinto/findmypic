@@ -68,7 +68,7 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
-  const { user, userProfile, loading: authLoading  } = useAuth()
+  const { user, userProfile, loading: authLoading, apiRequest } = useAuth()
   const router = useRouter()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
@@ -86,7 +86,7 @@ export default function AdminDashboard() {
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await fetch('/api/admin/dashboard-stats')
+      const response = await apiRequest('/api/admin/dashboard-stats')
       if (response.ok) {
         const data = await response.json()
         setStats(data)
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
     )
   }
 
-  if (!user || !(user as any).isAdmin) {
+  if (!user || !userProfile?.isAdmin) {
     return null
   }
 

@@ -12,7 +12,16 @@ export interface AdminUser {
 
 export async function requireAdmin(request: NextRequest): Promise<AdminUser | NextResponse> {
   try {
-    const user = await requireAuth(request)
+    let user
+    try {
+      user = await requireAuth(request)
+    } catch (error) {
+      console.log('requireAuth failed:', error.message)
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
     
     if (!user?.id) {
       return NextResponse.json(

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 import { 
   ArrowLeft, 
   Search, 
@@ -55,6 +56,7 @@ interface SearchLogEntry {
 }
 
 export default function SearchLogsPage() {
+  const { user, userProfile, loading: authLoading, apiRequest } = useAuth()
   const router = useRouter()
   const [logs, setLogs] = useState<SearchLogEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -62,12 +64,19 @@ export default function SearchLogsPage() {
   const [filter, setFilter] = useState<'all' | 'completed' | 'failed' | 'recent'>('all')
 
   useEffect(() => {
+    if (authLoading) return
+    
+    if (!user || !userProfile?.isAdmin) {
+      router.push('/login')
+      return
+    }
+
     fetchLogs()
-  }, [filter])
+  }, [user, userProfile, authLoading, router, filter])
 
   const fetchLogs = async () => {
     try {
-      const response = await fetch(`/api/admin/search-logs?filter=${filter}`)
+      const response = await apiRequest(`/api/admin/search-logs?filter=${filter}`)
       if (response.ok) {
         const data = await response.json()
         setLogs(data.logs)

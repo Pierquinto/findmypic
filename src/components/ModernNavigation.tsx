@@ -82,7 +82,7 @@ const authenticatedNavigationItems: NavigationItem[] = [
 ]
 
 export default function ModernNavigation() {
-  const { user, loading, signOut } = useAuth()
+  const { user, userProfile, loading, signOut } = useAuth()
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -242,8 +242,8 @@ export default function ModernNavigation() {
                         
 
 
-                        {/* Admin section - to be implemented with user metadata */}
-                        {false && (
+                        {/* Admin section */}
+                        {user && userProfile?.isAdmin && (
                           <Link
                             href="/admin"
                             className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"

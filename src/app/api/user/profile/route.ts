@@ -37,6 +37,8 @@ export async function GET(request: NextRequest) {
       searches: user.searches,
       createdAt: user.createdAt,
       isAdmin: user.isAdmin,
+      role: user.role,
+      permissions: user.permissions,
       profile: user.profile
     })
 

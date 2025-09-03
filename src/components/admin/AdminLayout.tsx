@@ -166,7 +166,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     )
   }
 
-  if (!user || !(user as any).isAdmin) {
+  if (!user || !userProfile?.isAdmin) {
     return null
   }
 
