@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Shield, Mail, Lock, Eye, EyeOff, User, Check } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('')
@@ -15,21 +15,15 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
-  const [isCheckingSession, setIsCheckingSession] = useState(true)
   const router = useRouter()
+  const { signUp, user, loading } = useAuth()
 
   // Controlla se l'utente è già loggato
   useEffect(() => {
-    const checkSession = async () => {
-      const session = await getSession()
-      if (session) {
-        router.push('/dashboard')
-      } else {
-        setIsCheckingSession(false)
-      }
+    if (!loading && user) {
+      router.push('/dashboard')
     }
-    checkSession()
-  }, [router])
+  }, [user, loading, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,45 +43,22 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        setSuccess(true)
-        
-        setTimeout(async () => {
-          const result = await signIn('credentials', {
-            email,
-            password,
-            redirect: false,
-          })
-
-          if (result?.ok) {
-            router.push('/dashboard')
-          }
-        }, 2000)
-      } else {
-        setError(data.error || 'Errore durante la registrazione')
-      }
+      await signUp(email, password)
+      setSuccess(true)
+      
+      // Supabase Auth potrebbe richiedere conferma email
+      setTimeout(() => {
+        router.push('/login?message=registered')
+      }, 2000)
     } catch (error) {
-      setError('Errore durante la registrazione')
+      setError(error instanceof Error ? error.message : 'Errore durante la registrazione')
     } finally {
       setIsLoading(false)
     }
   }
 
   // Mostra loading mentre controlla la sessione
-  if (isCheckingSession) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>

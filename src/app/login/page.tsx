@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Shield, Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -12,21 +12,15 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [isCheckingSession, setIsCheckingSession] = useState(true)
   const router = useRouter()
+  const { signIn, user, loading } = useAuth()
 
   // Controlla se l'utente è già loggato
   useEffect(() => {
-    const checkSession = async () => {
-      const session = await getSession()
-      if (session) {
-        router.push('/dashboard')
-      } else {
-        setIsCheckingSession(false)
-      }
+    if (!loading && user) {
+      router.push('/dashboard')
     }
-    checkSession()
-  }, [router])
+  }, [user, loading, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,29 +28,17 @@ export default function LoginPage() {
     setError('')
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      })
-
-      if (result?.error) {
-        setError('Credenziali non valide')
-      } else {
-        const session = await getSession()
-        if (session) {
-          router.push('/dashboard')
-        }
-      }
+      await signIn(email, password)
+      router.push('/dashboard')
     } catch (error) {
-      setError('Errore durante il login')
+      setError(error instanceof Error ? error.message : 'Errore durante il login')
     } finally {
       setIsLoading(false)
     }
   }
 
   // Mostra loading mentre controlla la sessione
-  if (isCheckingSession) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>

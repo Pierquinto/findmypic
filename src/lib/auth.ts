@@ -1,80 +1,78 @@
-import { NextAuthOptions } from "next-auth"
-import CredentialsProvider from "next-auth/providers/credentials"
-import bcrypt from "bcryptjs"
-import { prisma } from "./prisma"
+import { supabase } from './supabase'
+import { User } from '@supabase/supabase-js'
 
-export const authOptions: NextAuthOptions = {
-  providers: [
-    CredentialsProvider({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null
-        }
+// Auth functions
+export async function signUp(email: string, password: string) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  })
+  
+  if (error) throw error
+  return data
+}
 
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email
-          }
-        })
+export async function signIn(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+  
+  if (error) throw error
+  return data
+}
 
-        if (!user) {
-          return null
-        }
+export async function signOut() {
+  const { error } = await supabase.auth.signOut()
+  if (error) throw error
+}
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        )
+export async function getCurrentUser(): Promise<User | null> {
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
+}
 
-        if (!isPasswordValid) {
-          return null
-        }
+export async function getSession() {
+  const { data: { session } } = await supabase.auth.getSession()
+  return session
+}
 
-        // Update last login
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lastLoginAt: new Date() }
-        })
+// Server-side auth helpers
+export async function getServerSession(request: Request) {
+  const authHeader = request.headers.get('Authorization')
+  if (!authHeader?.startsWith('Bearer ')) return null
+  
+  const token = authHeader.split(' ')[1]
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+  
+  if (error || !user) return null
+  return user
+}
 
-        return {
-          id: user.id,
-          email: user.email,
-          plan: user.plan,
-          role: user.role,
-          permissions: user.permissions,
-          isAdmin: user.role === 'admin'
-        }
-      }
-    })
-  ],
-  session: {
-    strategy: "jwt"
-  },
-  callbacks: {
-    jwt: async ({ user, token }) => {
-      if (user) {
-        token.uid = user.id
-        token.plan = (user as any).plan
-        token.role = (user as any).role
-        token.permissions = (user as any).permissions
-        token.isAdmin = (user as any).isAdmin
-      }
-      return token
-    },
-    session: async ({ session, token }) => {
-      if (session?.user) {
-        (session.user as any).id = token.uid
-        ;(session.user as any).plan = token.plan
-        ;(session.user as any).role = token.role
-        ;(session.user as any).permissions = token.permissions
-        ;(session.user as any).isAdmin = token.isAdmin
-      }
-      return session
-    },
-  },
+export async function requireAuth(request: Request) {
+  const user = await getServerSession(request)
+  if (!user) {
+    throw new Error('Unauthorized')
+  }
+  return user
+}
+
+export async function requireAdmin(request: Request) {
+  const user = await getServerSession(request)
+  if (!user) {
+    throw new Error('Unauthorized')
+  }
+  
+  // Check if user is admin in database
+  const { data: userData, error } = await supabase
+    .from('users')
+    .select('is_admin, role')
+    .eq('id', user.id)
+    .single()
+  
+  if (error || !userData?.is_admin) {
+    throw new Error('Forbidden: Admin access required')
+  }
+  
+  return user
 }
