@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     const { id } = await params
     
     if (!id) {
@@ -20,7 +20,7 @@ export async function GET(
     }
 
     // Verifica che l'utente abbia accesso a questa ricerca
-    if (!user || !(session.user as any).id) {
+    if (!user || !user.id) {
       return NextResponse.json(
         { error: 'Autenticazione richiesta' },
         { status: 401 }
@@ -50,7 +50,7 @@ export async function GET(
     const isAdmin = (session.user as any).isAdmin || (session.user as any).role === 'admin'
 
     // Verifica che l'utente abbia accesso a questa ricerca (admin possono accedere a tutto)
-    if (!isAdmin && search.userId !== (session.user as any).id) {
+    if (!isAdmin && search.userId !== user.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato a questa ricerca' },
         { status: 403 }

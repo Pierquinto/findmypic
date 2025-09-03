@@ -2,7 +2,7 @@
 
 import { AuthProvider } from '@/lib/auth-context'
 
-export function SessionProvider({
+export function AuthProviderWrapper({
   children,
 }: {
   children: React.ReactNode

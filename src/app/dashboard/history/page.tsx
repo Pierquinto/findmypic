@@ -58,9 +58,10 @@ export default function HistoryPage() {
   })
 
   useEffect(() => {
-    console.log('History page - session:', session)
-    fetchSearchHistory()
-  }, [filters, pagination.offset, session])
+    if (user) {
+      fetchSearchHistory()
+    }
+  }, [filters, pagination.offset, user])
 
   const fetchSearchHistory = async () => {
     setLoading(true)

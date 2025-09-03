@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth';
+import { getServerUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma'
 import { hasSearchesRemaining, getUserMaxSearches, shouldResetSearches } from '@/lib/limits'
 import { saveEncryptedSearch } from '@/lib/search/searchMiddleware'
@@ -13,56 +13,12 @@ import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireAuth(request)
-    
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Non autorizzato' },
-        { status: 401 }
-      )
-    }
-
-    const userId = (session.user as any).id
-    let user = await prisma.user.findUnique({
-      where: { id: userId }
-    })
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Utente non trovato' },
-        { status: 404 }
-      )
-    }
-
-    // Check if searches need to be reset
-    if (shouldResetSearches(user.searchesResetAt)) {
-      user = await prisma.user.update({
-        where: { id: userId },
-        data: { 
-          searches: 0, 
-          searchesResetAt: new Date() 
-        }
-      })
-    }
-
-    if (!hasSearchesRemaining(user.searches, user.plan, user.searchesResetAt, user.customSearchLimit)) {
-      const maxSearches = getUserMaxSearches(user.plan, user.customSearchLimit)
-      return NextResponse.json(
-        { 
-          error: 'Limite ricerche raggiunto',
-          plan: user.plan,
-          searches: user.searches,
-          maxSearches
-        },
-        { status: 429 }
-      )
-    }
-
     const { 
       imageData, 
       searchType = 'general_search', 
       securityLevel = 'standard',
-      advancedOptions = {}
+      advancedOptions = {},
+      anonymous = false
     } = await req.json()
 
     if (!imageData) {
@@ -70,6 +26,54 @@ export async function POST(req: NextRequest) {
         { error: 'Immagine richiesta' },
         { status: 400 }
       )
+    }
+
+    // Try to get authenticated user (optional for anonymous searches)
+    const authUser = await getServerUser(req)
+    let user = null
+    let userId = null
+
+    // Handle authenticated users
+    if (authUser?.id && !anonymous) {
+      userId = authUser.id
+      user = await prisma.user.findUnique({
+        where: { id: userId }
+      })
+
+      if (!user) {
+        return NextResponse.json(
+          { error: 'Utente non trovato' },
+          { status: 404 }
+        )
+      }
+    }
+
+    // Check search limits for authenticated users
+    if (user && userId) {
+      // Check if searches need to be reset
+      if (shouldResetSearches(user.searchesResetAt)) {
+        const updatedUser = await prisma.user.update({
+          where: { id: userId },
+          data: { 
+            searches: 0, 
+            searchesResetAt: new Date() 
+          }
+        })
+        user = updatedUser
+      }
+
+      if (!hasSearchesRemaining(user.searches, user.plan, user.searchesResetAt, user.customSearchLimit)) {
+        const maxSearches = getUserMaxSearches(user.plan, user.customSearchLimit)
+        return NextResponse.json(
+          { 
+            error: 'Limite ricerche raggiunto',
+            plan: user.plan,
+            searches: user.searches,
+            maxSearches
+          },
+          { status: 429 }
+        )
+      }
     }
 
     // Ottieni informazioni della richiesta per il logging sicuro
@@ -94,8 +98,8 @@ export async function POST(req: NextRequest) {
       searchQuery: {
         searchType,
         securityLevel,
-        userPlan: user.plan,
-        maxResults: user.plan === 'free' ? 10 : user.plan === 'basic' ? 25 : 50,
+        userPlan: user?.plan || 'anonymous',
+        maxResults: user?.plan === 'free' ? 10 : user?.plan === 'basic' ? 25 : user?.plan === 'pro' ? 50 : 5,
         similarityThreshold: searchType === 'copyright_detection' ? 85 : 75
       }
     })
@@ -233,18 +237,19 @@ export async function POST(req: NextRequest) {
       }
 
       // Prepara la query di ricerca
+      const userPlan = user?.plan || 'anonymous'
       const searchQuery = {
         imageData,
         searchType,
-        userPlan: user.plan,
+        userPlan,
         options: {
-          maxResults: user.plan === 'free' ? 10 : user.plan === 'basic' ? 25 : 50,
+          maxResults: userPlan === 'free' ? 10 : userPlan === 'basic' ? 25 : userPlan === 'pro' ? 50 : 5,
           similarityThreshold: searchType === 'copyright_detection' ? 85 : 75,
           includeSafeSearch: true,
-          includeAdultSites: user.plan !== 'free', // Solo per utenti paganti
+          includeAdultSites: userPlan !== 'free' && userPlan !== 'anonymous', // Solo per utenti paganti
           
           // Opzioni avanzate dal frontend (solo per utenti pro/basic)
-          ...(user.plan !== 'free' && advancedOptions && {
+          ...(userPlan !== 'free' && userPlan !== 'anonymous' && advancedOptions && {
             detectFaces: advancedOptions.detectFaces || false,
             detectLogos: advancedOptions.detectLogos || false,
             detectLandmarks: advancedOptions.detectLandmarks || false,
@@ -347,7 +352,7 @@ export async function POST(req: NextRequest) {
       // Salva la ricerca con crittografia usando il nostro middleware PRIMA dei logs
       const savedSearchId = await saveEncryptedSearch(
         {
-          userId,
+          userId: userId || null, // Allow anonymous searches
           imageUrl: savedImagePath ? savedImagePath : null,
           searchType,
           ipAddress,
@@ -442,17 +447,17 @@ export async function POST(req: NextRequest) {
           providersFailures: providersFailures,
           message: resultsWithThumbnails.length === 0 ? 'Nessuna violazione trovata nei database disponibili.' : `Trovati ${resultsWithThumbnails.length} possibili match.`
         },
-        user: {
+        user: user ? {
           searches: user.searches + 1,
           maxSearches: getUserMaxSearches(user.plan, user.customSearchLimit),
           plan: user.plan
-        },
+        } : null,
         disclaimer: {
           searchMethod: 'automated_reverse_image_search',
           description: 'Ricerca automatica inversa su provider terzi e siti specializzati',
           coverage: `Provider attivi: ${providersUsed.join(', ')}`,
           dataProtection: 'encrypted_storage_6_months',
-          dataRetention: user.plan === 'free' ? '6_months_automatic' : 'user_controlled'
+          dataRetention: user?.plan === 'free' ? '6_months_automatic' : user ? 'user_controlled' : 'anonymous_session_only'
         }
       })
 
@@ -473,7 +478,7 @@ export async function POST(req: NextRequest) {
       try {
         const failedSearchId = await saveEncryptedSearch(
           {
-            userId,
+            userId: userId || null,
             imageUrl: null, // Non abbiamo salvato l'immagine in caso di errore
             searchType,
             ipAddress,

@@ -2,7 +2,7 @@ import { encryptSensitiveData, createDataHash } from '@/lib/encryption'
 import { prisma } from '@/lib/prisma'
 
 export interface SearchRequest {
-  userId: string
+  userId: string | null
   imageFile?: File | string
   imageUrl?: string
   searchType?: string

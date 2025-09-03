@@ -3,18 +3,18 @@ import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma'
 
 // Get user profile
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const authUser = await requireAuth(request)
     
-    if (!session) {
+    if (!authUser?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = authUser.id
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -52,16 +52,16 @@ export async function GET() {
 // Update user profile
 export async function PUT(req: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const authUser = await requireAuth(req)
     
-    if (!session) {
+    if (!authUser?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = authUser.id
     const { firstName, lastName, company, phone, website, bio } = await req.json()
 
     // Update or create profile

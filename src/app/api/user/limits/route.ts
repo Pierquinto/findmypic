@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth';
+import { getServerUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma'
 import { getRemainingSearches, shouldResetSearches, getUserMaxSearches } from '@/lib/limits'
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const authUser = await getServerUser(request)
     
-    if (!user?.id) {
+    if (!authUser?.id) {
       return NextResponse.json(
         { error: 'Non autenticato' },
         { status: 401 }
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: authUser.id },
       select: {
         plan: true,
         searches: true,
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     // Check if searches need to be reset
     if (shouldResetSearches(user.searchesResetAt)) {
       await prisma.user.update({
-        where: { id: session.user.id },
+        where: { id: authUser.id },
         data: { 
           searches: 0, 
           searchesResetAt: new Date() 

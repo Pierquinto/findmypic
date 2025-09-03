@@ -15,7 +15,7 @@ const customSearchRequestSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     const body = await req.json()
     
     // Validazione input
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     // Crea la richiesta
     const customRequest = await prisma.customSearchRequest.create({
       data: {
-        userId: session ? (session.user as any).id : null,
+        userId: session ? user.id : null,
         email: validatedData.email,
         name: validatedData.name,
         requestType: validatedData.requestType,
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     // Log dell'attività
     await prisma.activityLog.create({
       data: {
-        userId: session ? (session.user as any).id : null,
+        userId: session ? user.id : null,
         action: 'CUSTOM_SEARCH_REQUEST_CREATED',
         resource: 'custom_search',
         resourceId: customRequest.id,
@@ -114,16 +114,16 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
     
     // Ottieni le richieste dell'utente
     const userRequests = await prisma.customSearchRequest.findMany({

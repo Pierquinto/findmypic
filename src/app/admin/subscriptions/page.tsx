@@ -37,7 +37,7 @@ interface Subscription {
 }
 
 export default function SubscriptionsManagement() {
-  const { user, loading: authLoading  } = useAuth()
+  const { user, userProfile, loading: authLoading, apiRequest } = useAuth()
   const router = useRouter()
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [loading, setLoading] = useState(true)
@@ -46,20 +46,20 @@ export default function SubscriptionsManagement() {
   const [planFilter, setPlanFilter] = useState('all')
 
   useEffect(() => {
-    if (!authLoading && user) return
+    if (authLoading) return
     
-    if (!session || !(session.user as any).isAdmin) {
+    if (!user || !userProfile?.isAdmin) {
       router.push('/login')
       return
     }
 
     fetchSubscriptions()
     fetchSubscriptionStats()
-  }, [session, status, router])
+  }, [user, authLoading, router])
 
   const fetchSubscriptions = async () => {
     try {
-      const response = await fetch('/api/admin/subscriptions')
+      const response = await apiRequest('/api/admin/subscriptions')
       if (response.ok) {
         const data = await response.json()
         setSubscriptions(data.subscriptions)
@@ -71,7 +71,7 @@ export default function SubscriptionsManagement() {
 
   const fetchSubscriptionStats = async () => {
     try {
-      const response = await fetch('/api/admin/subscription-stats')
+      const response = await apiRequest('/api/admin/subscription-stats')
       if (response.ok) {
         const data = await response.json()
         setStats(data)
@@ -85,7 +85,7 @@ export default function SubscriptionsManagement() {
 
   const handleSubscriptionAction = async (subscriptionId: string, action: string) => {
     try {
-      const response = await fetch(`/api/admin/subscriptions/${subscriptionId}`, {
+      const response = await apiRequest(`/api/admin/subscriptions/${subscriptionId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action })
@@ -138,7 +138,7 @@ export default function SubscriptionsManagement() {
     return matchesStatus && matchesPlan
   })
 
-  if (!authLoading && user || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>

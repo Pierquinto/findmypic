@@ -24,7 +24,7 @@ type SearchResult = {
 
 
 export default function SearchPage() {
-  const { user, loading } = useAuth()
+  const { user, loading, apiRequest } = useAuth()
   const router = useRouter()
   const [isScanning, setIsScanning] = useState(false)
   const [scanComplete, setScanComplete] = useState(false)
@@ -68,7 +68,7 @@ export default function SearchPage() {
     if (!uploadedFile) return
 
     // Se non è loggato, esegui ricerca anonima
-    if (!session) {
+    if (!user) {
       setIsScanning(true)
       
       try {
@@ -76,7 +76,7 @@ export default function SearchPage() {
         reader.onload = async (e) => {
           const imageData = e.target?.result
           
-          const response = await fetch('/api/search', {
+          const response = await apiRequest('/api/search', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -120,7 +120,7 @@ export default function SearchPage() {
       reader.onload = async (e) => {
         const imageData = e.target?.result
         
-        const response = await fetch('/api/search', {
+        const response = await apiRequest('/api/search', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -193,9 +193,9 @@ export default function SearchPage() {
   // Check for approaching limit when component mounts
   useEffect(() => {
     const checkSearchLimits = async () => {
-      if (session) {
+      if (user) {
         try {
-          const response = await fetch('/api/user/limits')
+          const response = await apiRequest('/api/user/limits')
           if (response.ok) {
             const data = await response.json()
             const remainingSearches = data.maxSearches - data.searches
@@ -219,14 +219,14 @@ export default function SearchPage() {
     }
 
     checkSearchLimits()
-  }, [session])
+  }, [user])
 
   const loadSearchHistory = async () => {
-    if (!session) return
+    if (!user) return
     
     setLoadingHistory(true)
     try {
-      const response = await fetch('/api/user/search-history?limit=10')
+      const response = await apiRequest('/api/user/search-history?limit=10')
       if (response.ok) {
         const data = await response.json()
         setSearchHistory(data.searches)
@@ -331,7 +331,7 @@ export default function SearchPage() {
                     Inizia Scansione
                   </button>
                   <p className="text-sm text-gray-500 mt-2">
-                    {!session && "Prova gratis senza registrazione"}
+                    {!user && "Prova gratis senza registrazione"}
                   </p>
                 </div>
               )}
@@ -383,7 +383,7 @@ export default function SearchPage() {
                   <p className="text-gray-600">
                     La tua immagine non è stata trovata sui siti web scansionati.
                   </p>
-                  {!session && (
+                  {!user && (
                     <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                       <p className="text-blue-800 text-sm">
                         <strong>Registrati gratuitamente</strong> per vedere i dettagli completi delle violazioni e accedere a 3 ricerche al mese!
@@ -405,11 +405,11 @@ export default function SearchPage() {
                       provider: result.provider,
                       webPageUrl: result.webPageUrl
                     }))}
-                    userPlan={session ? (session.user as any)?.plan || 'free' : 'anonymous'}
+                    userPlan={user ? (user as any)?.plan || 'free' : 'anonymous'}
                     searchId={searchId || undefined}
                   />
 
-                  {!session ? (
+                  {!user ? (
                     <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg">
                       <h4 className="font-semibold text-purple-900 mb-2">
                         🔓 Sblocca tutti i dettagli
@@ -463,8 +463,8 @@ export default function SearchPage() {
                     con cifratura AES-256.
                   </p>
                   <p>
-                    <strong>Ritenzione:</strong> {session ? 
-                      (session.user as any)?.plan === 'free' ? 
+                    <strong>Ritenzione:</strong> {user ? 
+                      (user as any)?.plan === 'free' ? 
                         'I tuoi dati verranno rimossi automaticamente dopo 6 mesi.' :
                         'Puoi richiedere la rimozione dei tuoi dati in qualsiasi momento dalla dashboard.'
                       : 'I dati vengono rimossi automaticamente dopo 6 mesi per utenti free.'
@@ -477,7 +477,7 @@ export default function SearchPage() {
                     >
                       Leggi la Privacy Policy
                     </Link>
-                    {session && (session.user as any)?.plan !== 'free' && (
+                    {user && (user as any)?.plan !== 'free' && (
                       <Link 
                         href="/dashboard/privacy" 
                         className="text-purple-600 hover:text-purple-700 text-xs underline"
@@ -504,7 +504,7 @@ export default function SearchPage() {
                   Nuova Scansione
                 </button>
                 
-                {session && (
+                {user && (
                   <button
                     onClick={() => {
                       setShowHistory(true)

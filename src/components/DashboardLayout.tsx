@@ -17,15 +17,15 @@ export default function DashboardLayout({ children, title, description }: Dashbo
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && user) return // Still loading
+    if (loading) return // Still loading
     
-    if (!session) {
+    if (!user) {
       router.push('/login')
       return
     }
-  }, [session, status, router])
+  }, [user, loading, router])
 
-  if (!loading && user) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -36,7 +36,7 @@ export default function DashboardLayout({ children, title, description }: Dashbo
     )
   }
 
-  if (!session) {
+  if (!user) {
     return null // Will redirect
   }
 

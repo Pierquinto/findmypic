@@ -46,15 +46,17 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
+    if (authLoading) return
+    
+    if (!user) {
       router.push('/login')
       return
     }
 
-    if (session) {
+    if (user) {
       fetchDashboardData()
     }
-  }, [session, status, router])
+  }, [user, authLoading, router])
 
   const fetchDashboardData = async () => {
     try {
@@ -126,7 +128,7 @@ export default function DashboardPage() {
     }
   }
 
-  if (loading || !authLoading && user) {
+  if (loading || authLoading) {
     return (
       <DashboardLayout title="Dashboard" description="Panoramica del tuo account e attività">
         <div className="text-center py-12">
@@ -137,7 +139,7 @@ export default function DashboardPage() {
     )
   }
 
-  if (!session || !dashboardData) {
+  if (!user || !dashboardData) {
     return null
   }
 

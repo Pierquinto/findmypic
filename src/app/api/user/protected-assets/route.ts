@@ -6,18 +6,18 @@ import { join } from 'path'
 import crypto from 'crypto'
 import { createDataHash } from '@/lib/encryption'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
 
     // Fetch protected assets
     const assets = await prisma.protectedAsset.findMany({
@@ -87,16 +87,16 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
     const formData = await req.formData()
     
     const file = formData.get('file') as File

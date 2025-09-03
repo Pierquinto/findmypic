@@ -5,16 +5,16 @@ import { decryptSensitiveData } from '@/lib/encryption'
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
     const { searchParams } = new URL(req.url)
     const limit = parseInt(searchParams.get('limit') || '20')
     const offset = parseInt(searchParams.get('offset') || '0')
@@ -79,16 +79,16 @@ export async function GET(req: NextRequest) {
 // Recupera una singola ricerca dalla cronologia
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
     const { searchId } = await req.json()
 
     if (!searchId) {
@@ -189,16 +189,16 @@ export async function POST(req: NextRequest) {
 // Delete a search from history
 export async function DELETE(req: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
     const { searchId } = await req.json()
 
     if (!searchId) {

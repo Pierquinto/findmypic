@@ -5,16 +5,16 @@ import { prisma } from '@/lib/prisma'
 // GET /api/violations - Get user's violations with optional filtering
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
     const { searchParams } = new URL(req.url)
     
     // Optional filters

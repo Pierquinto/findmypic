@@ -9,16 +9,16 @@ interface RouteParams {
 // Update protected asset
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
     const assetId = params.id
     const updateData = await req.json()
 
@@ -60,16 +60,16 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 // Delete protected asset
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
     const assetId = params.id
 
     // Verify asset belongs to user

@@ -4,21 +4,21 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
-    const user = await prisma.user.findUnique({
+    const userId = user.id
+    const userData = await prisma.user.findUnique({
       where: { id: userId }
     })
 
-    if (!user) {
+    if (!userData) {
       return NextResponse.json(
         { error: 'Utente non trovato' },
         { status: 404 }
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Solo utenti premium possono richiedere rimozione immediata
-    if (user.plan === 'free') {
+    if (userData.plan === 'free') {
       return NextResponse.json(
         { 
           error: 'Funzionalità non disponibile',
@@ -100,21 +100,21 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
-    const user = await prisma.user.findUnique({
+    const userId = user.id
+    const userData = await prisma.user.findUnique({
       where: { id: userId }
     })
 
-    if (!user) {
+    if (!userData) {
       return NextResponse.json(
         { error: 'Utente non trovato' },
         { status: 404 }

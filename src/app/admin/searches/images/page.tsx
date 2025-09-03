@@ -53,7 +53,7 @@ interface ImageStats {
 }
 
 export default function ImagesUploaded() {
-  const { user, loading: authLoading  } = useAuth()
+  const { user, userProfile, loading: authLoading, apiRequest } = useAuth()
   const router = useRouter()
   const [images, setImages] = useState<ImageSearch[]>([])
   const [stats, setStats] = useState<ImageStats | null>(null)
@@ -73,16 +73,16 @@ export default function ImagesUploaded() {
   })
 
   useEffect(() => {
-    if (!authLoading && user) return
+    if (authLoading) return
     
-    if (!session || !(session.user as any).isAdmin) {
+    if (!user || !userProfile?.isAdmin) {
       router.push('/login')
       return
     }
 
     fetchImages()
     fetchImageStats()
-  }, [session, status, router, filters])
+  }, [user, authLoading, router, filters])
 
   const fetchImages = async () => {
     try {
@@ -102,7 +102,7 @@ export default function ImagesUploaded() {
         params.append('decrypt', 'true')
       }
 
-      const response = await fetch(`/api/admin/searches?${params.toString()}`)
+      const response = await apiRequest(`/api/admin/searches?${params.toString()}`)
       if (response.ok) {
         const data = await response.json()
         setImages(data.searches)
@@ -117,7 +117,7 @@ export default function ImagesUploaded() {
 
   const fetchImageStats = async () => {
     try {
-      const response = await fetch('/api/admin/searches/image-stats')
+      const response = await apiRequest('/api/admin/searches/image-stats')
       if (response.ok) {
         const data = await response.json()
         setStats(data)
@@ -157,7 +157,7 @@ export default function ImagesUploaded() {
         }
       })
 
-      const response = await fetch(`/api/admin/searches/export?${params.toString()}`)
+      const response = await apiRequest(`/api/admin/searches/export?${params.toString()}`)
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
@@ -200,7 +200,7 @@ export default function ImagesUploaded() {
     }
   }
 
-  if (!authLoading && user || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>

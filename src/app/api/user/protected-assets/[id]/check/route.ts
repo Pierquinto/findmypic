@@ -14,16 +14,16 @@ interface RouteParams {
 // Run manual monitoring check for protected asset
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
     const assetId = params.id
 
     // Get the protected asset

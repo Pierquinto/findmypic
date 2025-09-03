@@ -2,18 +2,18 @@ import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma'
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   try {
     const user = await requireAuth(request)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
 
     // Log the deletion for audit purposes
     await prisma.activityLog.create({
@@ -23,7 +23,7 @@ export async function DELETE() {
         resource: 'USER',
         resourceId: userId,
         details: {
-          email: session.user?.email,
+          email: user.email,
           deletedAt: new Date().toISOString(),
           reason: 'user_requested'
         }

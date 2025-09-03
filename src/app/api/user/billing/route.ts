@@ -3,18 +3,18 @@ import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma'
 import { getUserMaxSearches, shouldResetSearches } from '@/lib/limits'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const user = await requireAuth(request)
+    const authUser = await requireAuth(request)
     
-    if (!session) {
+    if (!authUser?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = authUser.id
 
     // Get user info
     let user = await prisma.user.findUnique({
@@ -30,13 +30,14 @@ export async function GET() {
 
     // Check if searches need to be reset
     if (shouldResetSearches(user.searchesResetAt)) {
-      user = await prisma.user.update({
+      const updatedUser = await prisma.user.update({
         where: { id: userId },
         data: { 
           searches: 0, 
           searchesResetAt: new Date() 
         }
       })
+      user = updatedUser
     }
 
     // Get current subscription if exists

@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     const { id } = await params
     
     if (!id) {
@@ -19,7 +19,7 @@ export async function GET(
     }
 
     // Verifica che l'utente abbia accesso a questa ricerca
-    if (!user || !(session.user as any).id) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Autenticazione richiesta' },
         { status: 401 }
@@ -45,10 +45,10 @@ export async function GET(
     }
 
     // Check if user is admin
-    const isAdmin = (session.user as any).isAdmin || (session.user as any).role === 'admin'
+    const isAdmin = (user as any).isAdmin || (user as any).role === 'admin'
 
     // Verifica che l'utente abbia accesso a questa ricerca (admin possono accedere a tutto)
-    if (!isAdmin && search.userId !== (session.user as any).id) {
+    if (!isAdmin && search.userId !== user.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato a questa ricerca' },
         { status: 403 }
@@ -58,7 +58,7 @@ export async function GET(
     // Genera un token temporaneo per l'immagine
     const tokenData = {
       searchId: id,
-      userId: (session.user as any).id,
+      userId: user.id,
       timestamp: Date.now()
     }
     
@@ -69,7 +69,7 @@ export async function GET(
       data: {
         token,
         searchId: id,
-        userId: (session.user as any).id,
+        userId: user.id,
         expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minuti
       }
     })

@@ -68,21 +68,21 @@ interface DashboardStats {
 }
 
 export default function AdminDashboard() {
-  const { user, loading: authLoading  } = useAuth()
+  const { user, userProfile, loading: authLoading  } = useAuth()
   const router = useRouter()
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!authLoading && user) return
+    if (authLoading) return
     
-    if (!session || !(session.user as any).isAdmin) {
+    if (!user || !userProfile?.isAdmin) {
       router.push('/login')
       return
     }
 
     fetchDashboardStats()
-  }, [session, status, router])
+  }, [user, authLoading, router])
 
   const fetchDashboardStats = async () => {
     try {
@@ -98,7 +98,7 @@ export default function AdminDashboard() {
     }
   }
 
-  if (!authLoading && user || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
@@ -106,7 +106,7 @@ export default function AdminDashboard() {
     )
   }
 
-  if (!session || !(session.user as any).isAdmin) {
+  if (!user || !(user as any).isAdmin) {
     return null
   }
 

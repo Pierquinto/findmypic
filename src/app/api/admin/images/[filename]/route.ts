@@ -7,9 +7,9 @@ export async function GET(
   { params }: { params: Promise<{ filename: string }> }
 ) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session || !(session.user as any).isAdmin) {
+    if (!user || !(user as any).isAdmin) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }

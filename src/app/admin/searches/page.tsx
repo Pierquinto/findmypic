@@ -73,7 +73,7 @@ interface SearchStats {
 }
 
 export default function SearchesManagement() {
-  const { user, loading: authLoading  } = useAuth()
+  const { user, userProfile, loading: authLoading, apiRequest } = useAuth()
   const router = useRouter()
   const [searches, setSearches] = useState<SearchRecord[]>([])
   const [stats, setStats] = useState<SearchStats | null>(null)
@@ -95,16 +95,16 @@ export default function SearchesManagement() {
   })
 
   useEffect(() => {
-    if (!authLoading && user) return
+    if (authLoading) return
     
-    if (!session || !(session.user as any).isAdmin) {
+    if (!user || !userProfile?.isAdmin) {
       router.push('/login')
       return
     }
 
     fetchSearches()
     fetchSearchStats()
-  }, [session, status, router, filters])
+  }, [user, authLoading, router, filters])
 
   const fetchSearches = async () => {
     try {
@@ -120,7 +120,7 @@ export default function SearchesManagement() {
         params.append('decrypt', 'true')
       }
 
-      const response = await fetch(`/api/admin/searches?${params.toString()}`)
+      const response = await apiRequest(`/api/admin/searches?${params.toString()}`)
       if (response.ok) {
         const data = await response.json()
         setSearches(data.searches)
@@ -135,7 +135,7 @@ export default function SearchesManagement() {
 
   const fetchSearchStats = async () => {
     try {
-      const response = await fetch('/api/admin/search-stats')
+      const response = await apiRequest('/api/admin/search-stats')
       if (response.ok) {
         const data = await response.json()
         setStats(data)
@@ -154,7 +154,7 @@ export default function SearchesManagement() {
         }
       })
 
-      const response = await fetch(`/api/admin/searches/export?${params.toString()}`)
+      const response = await apiRequest(`/api/admin/searches/export?${params.toString()}`)
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
@@ -220,7 +220,7 @@ export default function SearchesManagement() {
     setShowImageModal(true)
   }
 
-  if (!authLoading && user || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>

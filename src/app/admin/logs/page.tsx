@@ -44,7 +44,7 @@ interface LogStats {
 }
 
 export default function SystemLogs() {
-  const { user, loading: authLoading  } = useAuth()
+  const { user, userProfile, loading: authLoading, apiRequest } = useAuth()
   const router = useRouter()
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [stats, setStats] = useState<LogStats | null>(null)
@@ -61,16 +61,16 @@ export default function SystemLogs() {
   })
 
   useEffect(() => {
-    if (!authLoading && user) return
+    if (authLoading) return
     
-    if (!session || !(session.user as any).isAdmin) {
+    if (!user || !userProfile?.isAdmin) {
       router.push('/login')
       return
     }
 
     fetchLogs()
     fetchLogStats()
-  }, [session, status, router, filters])
+  }, [user, authLoading, router, filters])
 
   const fetchLogs = async () => {
     try {
@@ -82,7 +82,7 @@ export default function SystemLogs() {
         }
       })
 
-      const response = await fetch(`/api/admin/logs?${params.toString()}`)
+      const response = await apiRequest(`/api/admin/logs?${params.toString()}`)
       if (response.ok) {
         const data = await response.json()
         setLogs(data.logs)
@@ -97,7 +97,7 @@ export default function SystemLogs() {
 
   const fetchLogStats = async () => {
     try {
-      const response = await fetch('/api/admin/log-stats')
+      const response = await apiRequest('/api/admin/log-stats')
       if (response.ok) {
         const data = await response.json()
         setStats(data)
@@ -116,7 +116,7 @@ export default function SystemLogs() {
         }
       })
 
-      const response = await fetch(`/api/admin/logs/export?${params.toString()}`)
+      const response = await apiRequest(`/api/admin/logs/export?${params.toString()}`)
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
@@ -157,7 +157,7 @@ export default function SystemLogs() {
     }
   }
 
-  if (!authLoading && user || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>

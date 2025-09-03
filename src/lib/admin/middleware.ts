@@ -14,7 +14,7 @@ export async function requireAdmin(request: NextRequest): Promise<AdminUser | Ne
   try {
     const user = await requireAuth(request)
     
-    if (!user?.email) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -22,16 +22,17 @@ export async function requireAdmin(request: NextRequest): Promise<AdminUser | Ne
     }
 
     const dbUser = await prisma.user.findUnique({
-      where: { email: user.email },
+      where: { id: user.id },
       select: {
         id: true,
         email: true,
         role: true,
-        permissions: true
+        permissions: true,
+        isAdmin: true
       }
     })
 
-    if (!dbUser || dbUser.role !== 'admin') {
+    if (!dbUser || (!dbUser.isAdmin && dbUser.role !== 'admin')) {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }

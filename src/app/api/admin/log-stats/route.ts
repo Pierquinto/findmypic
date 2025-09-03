@@ -4,9 +4,9 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session || !(session.user as any).isAdmin) {
+    if (!user || !(user as any).isAdmin) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }

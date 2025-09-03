@@ -55,7 +55,7 @@ interface SystemConfig {
 }
 
 export default function SystemSettings() {
-  const { user, loading: authLoading  } = useAuth()
+  const { user, userProfile, loading: authLoading, apiRequest } = useAuth()
   const router = useRouter()
   const [config, setConfig] = useState<SystemConfig | null>(null)
   const [loading, setLoading] = useState(true)
@@ -65,20 +65,20 @@ export default function SystemSettings() {
   const [providerStatus, setProviderStatus] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
-    if (!authLoading && user) return
+    if (authLoading) return
     
-    if (!session || !(session.user as any).isAdmin) {
+    if (!user || !userProfile?.isAdmin) {
       router.push('/login')
       return
     }
 
     fetchConfig()
     checkProviderStatus()
-  }, [session, status, router])
+  }, [user, authLoading, router])
 
   const fetchConfig = async () => {
     try {
-      const response = await fetch('/api/admin/system-config')
+      const response = await apiRequest('/api/admin/system-config')
       if (response.ok) {
         const data = await response.json()
         setConfig(data)
@@ -92,7 +92,7 @@ export default function SystemSettings() {
 
   const checkProviderStatus = async () => {
     try {
-      const response = await fetch('/api/admin/search-stats')
+      const response = await apiRequest('/api/admin/search-stats')
       if (response.ok) {
         const data = await response.json()
         const status: Record<string, boolean> = {}
@@ -111,7 +111,7 @@ export default function SystemSettings() {
 
     setSaving(true)
     try {
-      const response = await fetch('/api/admin/system-config', {
+      const response = await apiRequest('/api/admin/system-config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
@@ -132,7 +132,7 @@ export default function SystemSettings() {
   const testProvider = async (providerName: string) => {
     setTesting(providerName)
     try {
-      const response = await fetch(`/api/admin/test-provider/${providerName}`, {
+      const response = await apiRequest(`/api/admin/test-provider/${providerName}`, {
         method: 'POST'
       })
       
@@ -197,7 +197,7 @@ export default function SystemSettings() {
     })
   }
 
-  if (!authLoading && user || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>

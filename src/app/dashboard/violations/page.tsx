@@ -73,18 +73,18 @@ export default function ViolationsPage() {
   })
 
   useEffect(() => {
-    if (!authLoading && user) return
-    if (status === 'unauthenticated') {
+    if (authLoading) return
+    if (!user) {
       redirect('/login')
     }
-  }, [status])
+  }, [user, authLoading])
 
   useEffect(() => {
-    if (session) {
+    if (user) {
       fetchViolations()
       fetchStats()
     }
-  }, [session, statusFilter, priorityFilter, categoryFilter, searchQuery, offset])
+  }, [user, statusFilter, priorityFilter, categoryFilter, searchQuery, offset])
 
   const fetchViolations = async () => {
     try {
@@ -206,7 +206,7 @@ export default function ViolationsPage() {
     }
   }
 
-  if (!authLoading && user || loading) {
+  if (authLoading || loading) {
     return (
       <DashboardLayout title="Violazioni" description="Gestisci le violazioni trovate nelle tue ricerche">
         <div className="flex justify-center items-center min-h-64">

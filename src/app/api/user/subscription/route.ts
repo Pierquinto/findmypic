@@ -5,16 +5,16 @@ import { prisma } from '@/lib/prisma'
 // Create or update subscription
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
     const { plan } = await req.json()
 
     if (!['free', 'basic', 'pro'].includes(plan)) {

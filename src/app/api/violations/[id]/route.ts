@@ -5,16 +5,16 @@ import { prisma } from '@/lib/prisma'
 // GET /api/violations/[id] - Get specific violation
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
     const { id } = params
 
     const violation = await prisma.violation.findFirst({
@@ -45,16 +45,16 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 // PATCH /api/violations/[id] - Update violation
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
     const { id } = params
     const body = await req.json()
 
@@ -118,16 +118,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 // DELETE /api/violations/[id] - Delete specific violation
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth(req)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
     const { id } = params
 
     // Check if violation exists and belongs to user

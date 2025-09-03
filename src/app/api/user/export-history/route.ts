@@ -3,18 +3,18 @@ import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma'
 import { decryptSensitiveData } from '@/lib/encryption'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const user = await requireAuth(request)
     
-    if (!session) {
+    if (!user?.id) {
       return NextResponse.json(
         { error: 'Accesso non autorizzato' },
         { status: 401 }
       )
     }
 
-    const userId = (session.user as any).id
+    const userId = user.id
 
     // Get all user searches with full details
     const searches = await prisma.search.findMany({
@@ -32,7 +32,7 @@ export async function GET() {
     const exportData = {
       exportInfo: {
         exportDate: new Date().toISOString(),
-        userEmail: session.user?.email,
+        userEmail: user.email,
         totalSearches: searches.length,
         exportFormat: 'JSON'
       },

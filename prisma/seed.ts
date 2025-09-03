@@ -1,18 +1,18 @@
 import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
 async function main() {
   console.log('🌱 Seeding database...')
 
-  // Create admin user
-  const hashedPassword = await bcrypt.hash('admin123', 12)
-  
-  const adminUser = await prisma.user.create({
-    data: {
+  // Create admin user (password managed by Supabase)
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@findmypic.com' },
+    update: {},
+    create: {
+      id: 'admin-user-id', // Fixed ID for Supabase compatibility
       email: 'admin@findmypic.com',
-      password: hashedPassword,
+      password: 'supabase-managed', // Placeholder, Supabase handles auth
       plan: 'pro',
       role: 'admin',
       isAdmin: true,
@@ -23,12 +23,14 @@ async function main() {
 
   console.log('✅ Admin user created:', adminUser.email)
 
-  // Create test user
-  const testUserPassword = await bcrypt.hash('test123', 12)
-  const testUser = await prisma.user.create({
-    data: {
+  // Create test user (password managed by Supabase)
+  const testUser = await prisma.user.upsert({
+    where: { email: 'test@findmypic.com' },
+    update: {},
+    create: {
+      id: 'test-user-id', // Fixed ID for Supabase compatibility
       email: 'test@findmypic.com', 
-      password: testUserPassword,
+      password: 'supabase-managed', // Placeholder, Supabase handles auth
       plan: 'free',
       role: 'user',
       isAdmin: false,

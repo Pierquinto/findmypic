@@ -40,7 +40,7 @@ interface User {
 }
 
 export default function UsersManagement() {
-  const { user, loading: authLoading  } = useAuth()
+  const { user, userProfile, loading: authLoading, apiRequest } = useAuth()
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -66,19 +66,19 @@ export default function UsersManagement() {
   })
 
   useEffect(() => {
-    if (!authLoading && user) return
+    if (authLoading) return
     
-    if (!session || !(session.user as any).isAdmin) {
+    if (!user || !userProfile?.isAdmin) {
       router.push('/login')
       return
     }
 
     fetchUsers()
-  }, [session, status, router])
+  }, [user, userProfile, authLoading, router])
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/admin/users')
+      const response = await apiRequest('/api/admin/users')
       if (response.ok) {
         const data = await response.json()
         setUsers(data.users)
@@ -94,7 +94,7 @@ export default function UsersManagement() {
     if (action === 'edit') {
       // Fetch user details and open edit modal
       try {
-        const response = await fetch(`/api/admin/users/${userId}`)
+        const response = await apiRequest(`/api/admin/users/${userId}`)
         if (response.ok) {
           const { user } = await response.json()
           setEditingUser(user)
@@ -121,7 +121,7 @@ export default function UsersManagement() {
     }
 
     try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
+      const response = await apiRequest(`/api/admin/users/${userId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action })
@@ -205,7 +205,7 @@ export default function UsersManagement() {
     }
   }
 
-  if (!authLoading && user || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>

@@ -10,7 +10,7 @@ FindMyPic è un'app Next.js 14 progettata per aiutare content creator e vittime 
 - **Sistema di Ricerca** con simulazione scansione (3 sec delay)
 - **Mock Results** che mostrano violazioni su siti adult/social
 - **Sistema Freemium** (Gratuito: 1 ricerca, Basic: €9.99/mese per 10 ricerche)
-- **Autenticazione** email/password con NextAuth.js
+- **Autenticazione** email/password con Supabase Auth
 - **Dashboard Utente** per gestire ricerche e piano
 - **Pricing Page** completa con 3 piani
 
@@ -18,7 +18,7 @@ FindMyPic è un'app Next.js 14 progettata per aiutare content creator e vittime 
 - **Frontend**: Next.js 14, TypeScript, Tailwind CSS
 - **Backend**: Next.js API Routes, Prisma ORM
 - **Database**: SQLite (locale)
-- **Auth**: NextAuth.js
+- **Auth**: Supabase Auth
 - **UI**: Lucide React icons, responsive design
 
 ## 🗃 Schema Database (Prisma)
@@ -63,11 +63,12 @@ src/app/
 ├── register/page.tsx     # Registrazione nuovo utente
 ├── dashboard/page.tsx    # Dashboard utente con statistiche
 ├── pricing/page.tsx      # Pricing completo con FAQ
-├── layout.tsx           # Layout globale con SessionProvider
-├── providers.tsx        # NextAuth SessionProvider
+├── layout.tsx           # Layout globale con AuthProvider
+├── providers.tsx        # Supabase AuthProvider
 └── api/
     ├── auth/
-    │   ├── [...nextauth]/route.ts  # NextAuth handler
+    │   ├── login/route.ts          # Supabase login handler
+    │   ├── logout/route.ts         # Supabase logout handler
     │   └── register/route.ts       # Registrazione utente
     └── search/route.ts             # API ricerca con limiti freemium
 ```
@@ -90,8 +91,9 @@ src/app/
 3. **Configura variabili ambiente** (già preconfigurate in .env):
    ```
    DATABASE_URL="file:./dev.db"
-   NEXTAUTH_URL="http://localhost:3000"
-   NEXTAUTH_SECRET="findmypic-secret-key-development-only"
+   NEXT_PUBLIC_SUPABASE_URL="your-supabase-url"
+   NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
+   SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
    ```
 
 4. **Avvia il server**:
@@ -150,8 +152,8 @@ Per una versione production:
 
 ## 📝 Note di Sicurezza
 
-- Password sono hashate con bcrypt
-- Session JWT sicure
+- Password gestite da Supabase Auth
+- Session JWT sicure con Supabase
 - Immagini non vengono salvate permanentemente
 - Database locale per development
 - Environment variables per secrets

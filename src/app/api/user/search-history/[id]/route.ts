@@ -16,7 +16,7 @@ export async function GET(
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    console.log('API: Session found for user:', session.user.email)
+    console.log('API: User found:', user.email)
     const { id } = params
 
     // Find the search by ID and verify ownership
@@ -25,7 +25,7 @@ export async function GET(
       where: {
         id: id,
         user: {
-          email: session.user.email
+          email: user.email
         }
       },
       include: {

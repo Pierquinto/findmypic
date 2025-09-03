@@ -146,7 +146,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const user = await requireAuth(request)
     
-    if (!session || !(session.user as any).isAdmin) {
+    if (!user || !(user as any).isAdmin) {
       return NextResponse.json(
         { error: 'Accesso negato' },
         { status: 403 }

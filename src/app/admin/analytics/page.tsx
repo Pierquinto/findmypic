@@ -47,7 +47,7 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsDashboard() {
-  const { user, loading: authLoading  } = useAuth()
+  const { user, userProfile, loading: authLoading, apiRequest  } = useAuth()
   const router = useRouter()
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -55,20 +55,20 @@ export default function AnalyticsDashboard() {
   const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
-    if (!authLoading && user) return
+    if (authLoading) return
     
-    if (!session || !(session.user as any).isAdmin) {
+    if (!user || !userProfile?.isAdmin) {
       router.push('/login')
       return
     }
 
     fetchAnalytics()
-  }, [session, status, router, timeRange])
+  }, [user, authLoading, router, timeRange])
 
   const fetchAnalytics = async () => {
     try {
       setRefreshing(true)
-      const response = await fetch(`/api/admin/analytics?timeRange=${timeRange}`)
+      const response = await apiRequest(`/api/admin/analytics?timeRange=${timeRange}`)
       if (response.ok) {
         const data = await response.json()
         setAnalytics(data)

@@ -47,7 +47,7 @@ interface MenuItem {
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const { user, loading } = useAuth()
+  const { user, userProfile, loading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -55,13 +55,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['analytics'])
 
   useEffect(() => {
-    if (!loading && user) return
+    if (loading) return
     
-    if (!session || !(session.user as any).isAdmin) {
+    if (!user || !userProfile?.isAdmin) {
       router.push('/login')
       return
     }
-  }, [session, status, router])
+  }, [user, loading, router])
 
   const menuItems: MenuItem[] = [
     {
@@ -158,7 +158,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const isActiveSubItem = (href: string) => pathname === href
 
-  if (!loading && user) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -166,7 +166,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     )
   }
 
-  if (!session || !(session.user as any).isAdmin) {
+  if (!user || !(user as any).isAdmin) {
     return null
   }
 
