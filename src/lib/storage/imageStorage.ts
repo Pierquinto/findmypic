@@ -2,6 +2,8 @@ import fs from 'fs/promises'
 import path from 'path'
 import crypto from 'crypto'
 import { encryptSensitiveData } from '@/lib/encryption'
+import { uploadToR2, r2Client } from '@/lib/r2'
+import { GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 
 interface ImageMetadata {
   originalName?: string
@@ -31,7 +33,7 @@ export class ImageStorage {
   }
 
   /**
-   * Salva un'immagine in formato base64 nel storage sicuro
+   * Salva un'immagine in formato base64 nel storage R2
    */
   async saveImage(
     imageData: string, 
@@ -56,10 +58,7 @@ export class ImageStorage {
       // Crea nome file sicuro
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
       const randomSuffix = crypto.randomBytes(8).toString('hex')
-      const filename = `${timestamp}_${randomSuffix}_${imageHash.substring(0, 16)}.${extension}`
-      
-      // Path completo
-      const fullPath = path.join(this.baseStoragePath, filename)
+      const filename = `images/${timestamp}_${randomSuffix}_${imageHash.substring(0, 16)}.${extension}`
       
       // Metadata completa
       const completeMetadata: ImageMetadata = {
@@ -71,71 +70,90 @@ export class ImageStorage {
         uploadedAt: new Date()
       }
       
-      // Salva il file
-      await fs.writeFile(fullPath, imageBuffer)
+      // Salva l'immagine su R2
+      const publicUrl = await uploadToR2(filename, imageBuffer, mimeType)
       
-      // Salva anche i metadata in un file JSON crittografato
-      const metadataPath = fullPath + '.meta'
+      // Salva i metadata localmente per ora (potremmo spostarli su R2 in futuro)
+      const localMetadataPath = path.join(this.baseStoragePath, filename.replace('images/', '') + '.meta')
+      await this.ensureStorageDirectory()
       const encryptedMetadata = encryptSensitiveData(JSON.stringify(completeMetadata))
-      await fs.writeFile(metadataPath, encryptedMetadata)
+      await fs.writeFile(localMetadataPath, encryptedMetadata)
       
-      console.log(`Image saved: ${filename} (${imageBuffer.length} bytes)`)
+      console.log(`Image saved to R2: ${filename} (${imageBuffer.length} bytes) -> ${publicUrl}`)
       
       return {
-        storagePath: filename, // Restituisce solo il nome file, non il path completo
+        storagePath: filename, // Restituisce il path R2
         imageHash,
         metadata: completeMetadata
       }
       
     } catch (error) {
-      console.error('Error saving image:', error)
-      throw new Error('Failed to save image to storage')
+      console.error('Error saving image to R2:', error)
+      throw new Error('Failed to save image to R2 storage')
     }
   }
 
   /**
-   * Recupera un'immagine dal storage
+   * Recupera un'immagine dal storage R2
    */
   async getImage(storagePath: string): Promise<{
     buffer: Buffer
     metadata: ImageMetadata
   } | null> {
     try {
-      const fullPath = path.join(this.baseStoragePath, storagePath)
-      const metadataPath = fullPath + '.meta'
-      
-      // Leggi il file immagine
-      const imageBuffer = await fs.readFile(fullPath)
-      
-      // Leggi e decritta i metadata
-      const encryptedMetadata = await fs.readFile(metadataPath, 'utf8')
+      // Leggi i metadata locali
+      const localMetadataPath = path.join(this.baseStoragePath, storagePath.replace('images/', '') + '.meta')
+      const encryptedMetadata = await fs.readFile(localMetadataPath, 'utf8')
       const metadataJson = this.decryptMetadata(encryptedMetadata)
       const metadata = JSON.parse(metadataJson)
+      
+      // Recupera l'immagine da R2
+      const command = new GetObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME!,
+        Key: storagePath,
+      })
+      
+      const response = await r2Client.send(command)
+      const chunks: Uint8Array[] = []
+      
+      if (response.Body) {
+        for await (const chunk of response.Body as any) {
+          chunks.push(chunk)
+        }
+      }
+      
+      const imageBuffer = Buffer.concat(chunks)
       
       return { buffer: imageBuffer, metadata }
       
     } catch (error) {
-      console.error('Error retrieving image:', error)
+      console.error('Error retrieving image from R2:', error)
       return null
     }
   }
 
   /**
-   * Rimuove un'immagine dal storage
+   * Rimuove un'immagine dal storage R2
    */
   async deleteImage(storagePath: string): Promise<boolean> {
     try {
-      const fullPath = path.join(this.baseStoragePath, storagePath)
-      const metadataPath = fullPath + '.meta'
+      // Elimina l'immagine da R2
+      const deleteCommand = new DeleteObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME!,
+        Key: storagePath,
+      })
       
-      await fs.unlink(fullPath)
-      await fs.unlink(metadataPath)
+      await r2Client.send(deleteCommand)
       
-      console.log(`Image deleted: ${storagePath}`)
+      // Elimina i metadata locali
+      const localMetadataPath = path.join(this.baseStoragePath, storagePath.replace('images/', '') + '.meta')
+      await fs.unlink(localMetadataPath)
+      
+      console.log(`Image deleted from R2: ${storagePath}`)
       return true
       
     } catch (error) {
-      console.error('Error deleting image:', error)
+      console.error('Error deleting image from R2:', error)
       return false
     }
   }

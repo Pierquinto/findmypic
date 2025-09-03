@@ -47,7 +47,7 @@ export async function GET(
     }
 
     // Check if user is admin
-    const isAdmin = (session.user as any).isAdmin || (session.user as any).role === 'admin'
+    const isAdmin = (user as any).isAdmin || (user as any).role === 'admin'
 
     // Verifica che l'utente abbia accesso a questa ricerca (admin possono accedere a tutto)
     if (!isAdmin && search.userId !== user.id) {

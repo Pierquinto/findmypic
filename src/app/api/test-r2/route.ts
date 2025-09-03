@@ -1,5 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { uploadToR2 } from '@/lib/r2'
+import { uploadToR2, r2Client } from '@/lib/r2'
+import { ListObjectsV2Command } from '@aws-sdk/client-s3'
+
+export async function GET() {
+  try {
+    // Test R2 connection by listing objects
+    const command = new ListObjectsV2Command({
+      Bucket: process.env.R2_BUCKET_NAME!,
+      MaxKeys: 5
+    })
+    
+    const response = await r2Client.send(command)
+    
+    return NextResponse.json({ 
+      success: true,
+      bucket: process.env.R2_BUCKET_NAME,
+      objects: response.Contents?.length || 0,
+      sample: response.Contents?.slice(0, 3).map(obj => ({
+        key: obj.Key,
+        size: obj.Size,
+        lastModified: obj.LastModified
+      })) || []
+    })
+    
+  } catch (error) {
+    console.error('R2 connection test error:', error)
+    return NextResponse.json({ 
+      error: 'R2 connection failed',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
