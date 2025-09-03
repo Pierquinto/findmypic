@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import ThumbnailImage from '@/components/OptimizedImage'
@@ -42,7 +42,7 @@ interface FilterState {
 }
 
 export default function HistoryPage() {
-  const { data: session } = useSession()
+  const { user, loading: authLoading  } = useAuth()
   const router = useRouter()
   const [searches, setSearches] = useState<SearchHistoryItem[]>([])
   const [loading, setLoading] = useState(true)

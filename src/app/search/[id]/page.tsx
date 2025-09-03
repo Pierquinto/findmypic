@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import SearchResults, { SearchResultItem } from '@/components/SearchResults'
@@ -25,7 +25,7 @@ interface SearchData {
 export default function SearchResultPage() {
   const { id } = useParams()
   const router = useRouter()
-  const { data: session } = useSession()
+  const { user, loading: authLoading  } = useAuth()
   const [searchData, setSearchData] = useState<SearchData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -59,7 +59,7 @@ export default function SearchResultPage() {
     }
   }
 
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center">
         <div className="text-center">
@@ -137,7 +137,7 @@ export default function SearchResultPage() {
         {/* Risultati */}
         <SearchResults 
           results={searchData.results} 
-          userPlan={(session?.user as any)?.plan || 'free'} 
+          userPlan={(user as any)?.plan || 'free'} 
           searchId={searchData.searchId}
         />
       </main>

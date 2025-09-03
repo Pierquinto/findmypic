@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context';
 import { redirect } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { 
@@ -45,7 +45,7 @@ interface Violation {
 }
 
 export default function ViolationsPage() {
-  const { data: session, status } = useSession()
+  const { user, loading: authLoading  } = useAuth()
   const [violations, setViolations] = useState<Violation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -73,7 +73,7 @@ export default function ViolationsPage() {
   })
 
   useEffect(() => {
-    if (status === 'loading') return
+    if (!authLoading && user) return
     if (status === 'unauthenticated') {
       redirect('/login')
     }
@@ -206,7 +206,7 @@ export default function ViolationsPage() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  if (!authLoading && user || loading) {
     return (
       <DashboardLayout title="Violazioni" description="Gestisci le violazioni trovate nelle tue ricerche">
         <div className="flex justify-center items-center min-h-64">

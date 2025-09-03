@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link'
 import { 
   X, 
@@ -35,7 +35,7 @@ export default function PaywallModal({
   maxSearches,
   trigger 
 }: PaywallModalProps) {
-  const { data: session } = useSession()
+  const { user, loading } = useAuth()
   const [selectedPlan, setSelectedPlan] = useState<'basic' | 'pro'>('basic')
   const [showSocialProof, setShowSocialProof] = useState(true)
 

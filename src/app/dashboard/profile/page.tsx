@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context';
 import DashboardLayout from '@/components/DashboardLayout'
 import { 
   User, 
@@ -34,7 +34,7 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-  const { data: session, update } = useSession()
+  const { user, loading: authLoading  } = useAuth()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -125,7 +125,7 @@ export default function ProfilePage() {
     }
   }
 
-  if (loading) {
+  if (authLoading) {
     return (
       <DashboardLayout title="Profilo" description="Gestisci le informazioni del tuo account">
         <div className="text-center py-12">

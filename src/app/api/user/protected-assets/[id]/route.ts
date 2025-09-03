@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma'
 
 interface RouteParams {
@@ -10,7 +9,7 @@ interface RouteParams {
 // Update protected asset
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await requireAuth(request)
     
     if (!session) {
       return NextResponse.json(
@@ -61,7 +60,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 // Delete protected asset
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await requireAuth(request)
     
     if (!session) {
       return NextResponse.json(

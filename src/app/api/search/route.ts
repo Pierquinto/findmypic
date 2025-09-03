@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma'
 import { hasSearchesRemaining, getUserMaxSearches, shouldResetSearches } from '@/lib/limits'
 import { saveEncryptedSearch } from '@/lib/search/searchMiddleware'
@@ -14,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await requireAuth(request)
     
     if (!session) {
       return NextResponse.json(

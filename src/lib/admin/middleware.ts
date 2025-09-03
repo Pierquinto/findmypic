@@ -1,5 +1,4 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -11,19 +10,19 @@ export interface AdminUser {
   permissions: string[]
 }
 
-export async function requireAdmin(request?: NextRequest): Promise<AdminUser | NextResponse> {
+export async function requireAdmin(request: NextRequest): Promise<AdminUser | NextResponse> {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await requireAuth(request)
     
-    if (!session?.user?.email) {
+    if (!user?.email) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       )
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+    const dbUser = await prisma.user.findUnique({
+      where: { email: user.email },
       select: {
         id: true,
         email: true,
@@ -32,7 +31,7 @@ export async function requireAdmin(request?: NextRequest): Promise<AdminUser | N
       }
     })
 
-    if (!user || user.role !== 'admin') {
+    if (!dbUser || dbUser.role !== 'admin') {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }
@@ -40,11 +39,11 @@ export async function requireAdmin(request?: NextRequest): Promise<AdminUser | N
     }
 
     return {
-      id: user.id,
-      email: user.email,
+      id: dbUser.id,
+      email: dbUser.email,
       isAdmin: true,
-      isSuperAdmin: user.permissions?.includes('super_admin') || false,
-      permissions: user.permissions || []
+      isSuperAdmin: (dbUser.permissions as string[])?.includes('super_admin') || false,
+      permissions: (dbUser.permissions as string[]) || []
     }
 
   } catch (error) {

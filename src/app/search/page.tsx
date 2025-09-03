@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import SearchResults from '@/components/SearchResults'
@@ -24,7 +24,7 @@ type SearchResult = {
 
 
 export default function SearchPage() {
-  const { data: session } = useSession()
+  const { user, loading } = useAuth()
   const router = useRouter()
   const [isScanning, setIsScanning] = useState(false)
   const [scanComplete, setScanComplete] = useState(false)

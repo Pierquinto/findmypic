@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context';
 import { Shield, Clock, Search, AlertTriangle, Info, CheckCircle } from 'lucide-react'
 
 export default function CustomSearchPage() {
-  const { data: session } = useSession()
+  const { user, loading } = useAuth()
   const [formData, setFormData] = useState({
-    email: session?.user?.email || '',
+    email: user?.email || '',
     name: '',
     requestType: 'manual_search',
     description: '',

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/admin/middleware'
 import { prisma } from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
 
 interface RouteParams {
   params: {
@@ -170,8 +169,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
             { status: 400 }
           )
         }
-        const hashedPassword = await bcrypt.hash(data.newPassword, 10)
-        updateData = { password: hashedPassword }
+        // Password updates now handled by Supabase Auth
+        return NextResponse.json(
+          { error: 'Password updates must be done through Supabase Auth' },
+          { status: 400 }
+        )
         break
 
       default:

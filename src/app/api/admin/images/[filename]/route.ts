@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth';
 import { imageStorage } from '@/lib/storage/imageStorage'
 
 export async function GET(
@@ -8,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ filename: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await requireAuth(request)
     
     if (!session || !(session.user as any).isAdmin) {
       return NextResponse.json(

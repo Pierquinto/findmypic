@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useSession, signOut } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context'
 import { 
   Shield,
   Search, 
@@ -82,7 +82,7 @@ const authenticatedNavigationItems: NavigationItem[] = [
 ]
 
 export default function ModernNavigation() {
-  const { data: session, status } = useSession()
+  const { user, loading, signOut } = useAuth()
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -102,7 +102,7 @@ export default function ModernNavigation() {
     setMobileMenuOpen(false)
   }, [pathname])
 
-  const isAuthenticated = status === 'authenticated' && session
+  const isAuthenticated = !loading && user
   const navigationItems = isAuthenticated ? authenticatedNavigationItems : publicNavigationItems
 
   const getCurrentPage = () => {
@@ -202,10 +202,10 @@ export default function ModernNavigation() {
                     </div>
                     <div className="hidden md:block text-left">
                       <p className="text-sm font-medium text-gray-900">
-                        {session?.user?.email?.split('@')[0] || 'User'}
+                        {user?.email?.split('@')[0] || 'User'}
                       </p>
                       <p className="text-xs text-gray-500 capitalize">
-                        {(session?.user as any)?.plan || 'Free'} Plan
+                        Free Plan
                       </p>
                     </div>
                     <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
@@ -215,9 +215,9 @@ export default function ModernNavigation() {
                   {userMenuOpen && (
                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 z-50 animate-fade-in">
                       <div className="p-4 border-b border-gray-100">
-                        <p className="font-medium text-gray-900 truncate">{session?.user?.email}</p>
+                        <p className="font-medium text-gray-900 truncate">{user?.email}</p>
                         <p className="text-sm text-gray-500 capitalize">
-                          Piano {(session?.user as any)?.plan || 'Free'}
+                          Piano Free
                         </p>
                       </div>
                       
@@ -242,7 +242,8 @@ export default function ModernNavigation() {
                         
 
 
-                        {(session?.user as any)?.isAdmin && (
+                        {/* Admin section - to be implemented with user metadata */}
+                        {false && (
                           <Link
                             href="/admin"
                             className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -256,9 +257,10 @@ export default function ModernNavigation() {
 
                       <div className="border-t border-gray-100 py-2">
                         <button
-                          onClick={() => {
+                          onClick={async () => {
                             setUserMenuOpen(false)
-                            signOut({ callbackUrl: '/' })
+                            await signOut()
+                            window.location.href = '/'
                           }}
                           className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                         >

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context';
 import DashboardLayout from '@/components/DashboardLayout'
 import { 
   CreditCard, 
@@ -95,7 +95,7 @@ const plans = [
 ]
 
 export default function BillingPage() {
-  const { data: session } = useSession()
+  const { user, loading: authLoading  } = useAuth()
   const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [changingPlan, setChangingPlan] = useState<string | null>(null)
@@ -171,7 +171,7 @@ export default function BillingPage() {
     return plan?.color || 'gray'
   }
 
-  if (loading) {
+  if (authLoading) {
     return (
       <DashboardLayout title="Billing" description="Gestisci il tuo piano e fatturazione">
         <div className="text-center py-12">

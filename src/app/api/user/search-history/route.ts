@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma'
 import { decryptSensitiveData } from '@/lib/encryption'
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await requireAuth(request)
     
     if (!session) {
       return NextResponse.json(
@@ -80,7 +79,7 @@ export async function GET(req: NextRequest) {
 // Recupera una singola ricerca dalla cronologia
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await requireAuth(request)
     
     if (!session) {
       return NextResponse.json(
@@ -190,7 +189,7 @@ export async function POST(req: NextRequest) {
 // Delete a search from history
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await requireAuth(request)
     
     if (!session) {
       return NextResponse.json(

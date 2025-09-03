@@ -57,6 +57,37 @@ export async function requireAuth(request: Request) {
   return user
 }
 
+// Cookie-based auth for API routes (fallback)
+export async function getServerUser(request: Request) {
+  try {
+    // Try Authorization header first
+    const authHeader = request.headers.get('Authorization')
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1]
+      const { data: { user }, error } = await supabase.auth.getUser(token)
+      if (!error && user) return user
+    }
+
+    // Fallback to cookie-based auth (for development)
+    const cookies = request.headers.get('Cookie')
+    if (!cookies) return null
+
+    // Parse session from cookies - this is basic implementation
+    // In production, you'd want more robust cookie parsing
+    const sessionMatch = cookies.match(/supabase-auth-token=([^;]+)/)
+    if (!sessionMatch) return null
+
+    const token = decodeURIComponent(sessionMatch[1])
+    const { data: { user }, error } = await supabase.auth.getUser(token)
+    
+    if (error || !user) return null
+    return user
+  } catch (error) {
+    console.error('Auth error:', error)
+    return null
+  }
+}
+
 export async function requireAdmin(request: Request) {
   const user = await getServerSession(request)
   if (!user) {

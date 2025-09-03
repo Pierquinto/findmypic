@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
@@ -16,7 +15,7 @@ const customSearchRequestSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await requireAuth(request)
     const body = await req.json()
     
     // Validazione input
@@ -115,7 +114,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await requireAuth(request)
     
     if (!session) {
       return NextResponse.json(

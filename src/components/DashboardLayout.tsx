@@ -1,7 +1,7 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import Breadcrumb from './Breadcrumb'
@@ -13,11 +13,11 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children, title, description }: DashboardLayoutProps) {
-  const { data: session, status } = useSession()
+  const { user, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (status === 'loading') return // Still loading
+    if (!loading && user) return // Still loading
     
     if (!session) {
       router.push('/login')
@@ -25,7 +25,7 @@ export default function DashboardLayout({ children, title, description }: Dashbo
     }
   }, [session, status, router])
 
-  if (status === 'loading') {
+  if (!loading && user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context';
 import { useDropzone } from 'react-dropzone'
 import DashboardLayout from '@/components/DashboardLayout'
 import { 
@@ -52,7 +52,7 @@ interface MonitoringResult {
 }
 
 export default function ContentGuardianPage() {
-  const { data: session } = useSession()
+  const { user, loading: authLoading  } = useAuth()
   const [assets, setAssets] = useState<ProtectedAsset[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -209,7 +209,7 @@ export default function ContentGuardianPage() {
     return 'text-red-600 bg-red-100'
   }
 
-  if (loading) {
+  if (authLoading) {
     return (
       <DashboardLayout title="Content Guardian" description="Monitora e proteggi i tuoi contenuti digitali">
         <div className="text-center py-12">

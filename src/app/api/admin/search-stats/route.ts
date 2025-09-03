@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
 // Endpoint per pulire la cache
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await requireAuth(request)
     
     if (!session || !(session.user as any).isAdmin) {
       return NextResponse.json(

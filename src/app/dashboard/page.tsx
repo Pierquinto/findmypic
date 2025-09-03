@@ -1,6 +1,6 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -40,7 +40,7 @@ type DashboardData = {
 }
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession()
+  const { user, loading: authLoading  } = useAuth()
   const router = useRouter()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -75,7 +75,7 @@ export default function DashboardPage() {
           plan: userData?.currentPlan || 'free',
           searches: userData?.searches || 0,
           maxSearches: userData?.maxSearches || 1,
-          email: session?.user?.email || ''
+          email: user?.email || ''
         },
         recentSearches: searchData.searches || [],
         protectedAssets: {
@@ -94,10 +94,10 @@ export default function DashboardPage() {
       // Set fallback data
       setDashboardData({
         user: {
-          plan: (session?.user as any)?.plan || 'free',
+          plan: (user as any)?.plan || 'free',
           searches: 0,
           maxSearches: 1,
-          email: session?.user?.email || ''
+          email: user?.email || ''
         },
         recentSearches: [],
         protectedAssets: { total: 0, active: 0, violations: 0 },
@@ -126,7 +126,7 @@ export default function DashboardPage() {
     }
   }
 
-  if (loading || status === 'loading') {
+  if (loading || !authLoading && user) {
     return (
       <DashboardLayout title="Dashboard" description="Panoramica del tuo account e attività">
         <div className="text-center py-12">

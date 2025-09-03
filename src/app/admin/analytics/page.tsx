@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { 
@@ -47,7 +47,7 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsDashboard() {
-  const { data: session, status } = useSession()
+  const { user, loading: authLoading  } = useAuth()
   const router = useRouter()
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -55,7 +55,7 @@ export default function AnalyticsDashboard() {
   const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
-    if (status === 'loading') return
+    if (!authLoading && user) return
     
     if (!session || !(session.user as any).isAdmin) {
       router.push('/login')
@@ -100,7 +100,7 @@ export default function AnalyticsDashboard() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  if (!authLoading && user || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>

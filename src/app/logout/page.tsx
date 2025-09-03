@@ -1,6 +1,6 @@
 'use client'
 
-import { signOut } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context';
 import { useEffect } from 'react'
 import { Shield } from 'lucide-react'
 

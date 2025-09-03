@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth';
 import { imageStorage } from '@/lib/storage/imageStorage'
 import { prisma } from '@/lib/prisma'
 import { decryptSensitiveData } from '@/lib/encryption'
@@ -10,7 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await requireAuth(request)
     const { id } = await params
     
     if (!id) {
@@ -21,7 +20,7 @@ export async function GET(
     }
 
     // Verifica che l'utente abbia accesso a questa ricerca
-    if (!session?.user || !(session.user as any).id) {
+    if (!user || !(session.user as any).id) {
       return NextResponse.json(
         { error: 'Autenticazione richiesta' },
         { status: 401 }

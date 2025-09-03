@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { 
@@ -40,7 +40,7 @@ interface User {
 }
 
 export default function UsersManagement() {
-  const { data: session, status } = useSession()
+  const { user, loading: authLoading  } = useAuth()
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
@@ -66,7 +66,7 @@ export default function UsersManagement() {
   })
 
   useEffect(() => {
-    if (status === 'loading') return
+    if (!authLoading && user) return
     
     if (!session || !(session.user as any).isAdmin) {
       router.push('/login')
@@ -205,7 +205,7 @@ export default function UsersManagement() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  if (!authLoading && user || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>

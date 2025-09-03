@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/lib/auth-context';
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { 
@@ -47,7 +47,7 @@ interface MenuItem {
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const { data: session, status } = useSession()
+  const { user, loading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -55,7 +55,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [expandedMenus, setExpandedMenus] = useState<string[]>(['analytics'])
 
   useEffect(() => {
-    if (status === 'loading') return
+    if (!loading && user) return
     
     if (!session || !(session.user as any).isAdmin) {
       router.push('/login')
@@ -158,7 +158,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const isActiveSubItem = (href: string) => pathname === href
 
-  if (status === 'loading') {
+  if (!loading && user) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -278,11 +278,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                  {session?.user?.email?.[0]?.toUpperCase()}
+                  {user?.email?.[0]?.toUpperCase()}
                 </div>
                 <div className="ml-3">
                   <p className="text-sm font-medium text-slate-900">Admin</p>
-                  <p className="text-xs text-slate-500">{session?.user?.email}</p>
+                  <p className="text-xs text-slate-500">{user?.email}</p>
                 </div>
               </div>
               <Link
@@ -296,7 +296,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           ) : (
             <div className="flex flex-col items-center space-y-2">
               <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                {session?.user?.email?.[0]?.toUpperCase()}
+                {user?.email?.[0]?.toUpperCase()}
               </div>
               <Link
                 href="/logout"

@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma'
 
 // GET /api/violations - Get user's violations with optional filtering
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await requireAuth(request)
     
     if (!session) {
       return NextResponse.json(
@@ -69,7 +68,7 @@ export async function GET(req: NextRequest) {
 // POST /api/violations - Create a new violation
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await requireAuth(request)
     
     if (!session) {
       return NextResponse.json(
@@ -158,7 +157,7 @@ export async function POST(req: NextRequest) {
 // DELETE /api/violations - Delete violation(s)
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const user = await requireAuth(request)
     
     if (!session) {
       return NextResponse.json(
