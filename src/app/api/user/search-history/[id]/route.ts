@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth/server';
 import { prisma } from '@/lib/prisma'
 
 export async function GET(
@@ -10,7 +10,7 @@ export async function GET(
     const { id } = await params
     console.log('API: Getting search with ID:', id)
     
-    const user = await requireAuth(request)
+    const user = await requireAuth()
     
     if (!user?.email) {
       console.log('API: No session found')

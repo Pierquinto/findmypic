@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/admin/middleware'
+import { requireAdmin } from '@/lib/auth/server'
 import { prisma } from '@/lib/prisma'
 import { decryptSensitiveData } from '@/lib/encryption'
 
 export async function GET(request: NextRequest) {
   try {
-    const adminUser = await requireAdmin(request)
-    if (adminUser instanceof NextResponse) return adminUser
+    await requireAdmin()
+    
 
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')

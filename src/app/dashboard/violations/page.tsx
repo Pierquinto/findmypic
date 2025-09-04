@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/client';
 import { redirect } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import { 

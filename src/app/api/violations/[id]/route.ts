@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth/server';
 import { prisma } from '@/lib/prisma'
 
 // GET /api/violations/[id] - Get specific violation
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(req)
+    const user = await requireAuth()
     
     if (!user?.id) {
       return NextResponse.json(
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 // PATCH /api/violations/[id] - Update violation
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(req)
+    const user = await requireAuth()
     
     if (!user?.id) {
       return NextResponse.json(
@@ -118,7 +118,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 // DELETE /api/violations/[id] - Delete specific violation
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = await requireAuth(req)
+    const user = await requireAuth()
     
     if (!user?.id) {
       return NextResponse.json(

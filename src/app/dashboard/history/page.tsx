@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import ThumbnailImage from '@/components/OptimizedImage'

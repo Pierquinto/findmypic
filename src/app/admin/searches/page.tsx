@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/admin/AdminLayout'
 import ThumbnailImage from '@/components/OptimizedImage'
@@ -123,7 +123,7 @@ export default function SearchesManagement() {
       const response = await apiRequest(`/api/admin/searches?${params.toString()}`)
       if (response.ok) {
         const data = await response.json()
-        setSearches(data.searches)
+        setSearches(data?.searches || [])
       }
     } catch (error) {
       console.error('Error fetching searches:', error)
@@ -138,7 +138,7 @@ export default function SearchesManagement() {
       const response = await apiRequest('/api/admin/search-stats')
       if (response.ok) {
         const data = await response.json()
-        setStats(data)
+        setStats(data || null)
       }
     } catch (error) {
       console.error('Error fetching search stats:', error)
@@ -283,10 +283,10 @@ export default function SearchesManagement() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-slate-600">Ricerche Totali</p>
-                  <p className="text-3xl font-bold text-slate-900">{stats.totalSearches.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-slate-900">{stats?.totalSearches?.toLocaleString() || '0'}</p>
                   <div className="flex items-center mt-1">
                     <Calendar className="h-4 w-4 text-green-500 mr-1" />
-                    <span className="text-green-600 text-sm font-medium">{stats.todaySearches} oggi</span>
+                    <span className="text-green-600 text-sm font-medium">{stats?.todaySearches || 0} oggi</span>
                   </div>
                 </div>
               </div>
@@ -299,11 +299,14 @@ export default function SearchesManagement() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-slate-600">Successo</p>
-                  <p className="text-3xl font-bold text-slate-900">{stats.successfulSearches}</p>
+                  <p className="text-3xl font-bold text-slate-900">{stats?.successfulSearches || 0}</p>
                   <div className="flex items-center mt-1">
                     <Target className="h-4 w-4 text-green-500 mr-1" />
                     <span className="text-green-600 text-sm font-medium">
-                      {((stats.successfulSearches / stats.totalSearches) * 100).toFixed(1)}%
+                      {stats && stats.totalSearches > 0 
+                        ? ((stats.successfulSearches / stats.totalSearches) * 100).toFixed(1)
+                        : '0'
+                      }%
                     </span>
                   </div>
                 </div>

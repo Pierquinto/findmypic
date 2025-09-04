@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/admin/middleware'
+import { requireAdmin } from '@/lib/auth/server'
 import { prisma } from '@/lib/prisma'
 import { decryptSensitiveData, createDataHash } from '@/lib/encryption'
 import { saveEncryptedSearch } from '@/lib/search/searchMiddleware'
@@ -13,8 +13,8 @@ interface RouteParams {
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const adminUser = await requireAdmin(request)
-    if (adminUser instanceof NextResponse) return adminUser
+    await requireAdmin()
+    
 
     const { id } = await params
 

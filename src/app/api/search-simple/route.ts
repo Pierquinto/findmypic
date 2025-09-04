@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerUser } from '@/lib/auth';
+import { getUser } from '@/lib/auth/server';
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Try to get authenticated user (optional for anonymous searches)
-    const authUser = await getServerUser(req)
+    const authUser = await getUser()
     
     console.log('Auth user:', authUser?.email || 'anonymous')
     console.log('Anonymous flag:', anonymous)

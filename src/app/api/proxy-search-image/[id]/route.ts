@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth/server';
 import { imageStorage } from '@/lib/storage/imageStorage'
 import { prisma } from '@/lib/prisma'
 import { decryptSensitiveData } from '@/lib/encryption'
@@ -9,7 +9,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await requireAuth(req)
+    const user = await requireAuth()
     const { id } = await params
     
     if (!id) {

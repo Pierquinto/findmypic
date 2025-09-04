@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { signUp } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,17 +21,28 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('Creating user with Supabase Auth...')
-    const result = await signUp(email, password)
+    const supabase = createClient()
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password
+    })
     
-    console.log('User created successfully:', result.user?.id)
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      )
+    }
+    
+    console.log('User created successfully:', data.user?.id)
 
     return NextResponse.json({
       message: 'User created successfully. Please check your email for verification.',
       user: {
-        id: result.user?.id,
-        email: result.user?.email
+        id: data.user?.id,
+        email: data.user?.email
       },
-      needsEmailVerification: !result.session
+      needsEmailVerification: !data.session
     })
   } catch (error) {
     console.error('Registration error:', error)

@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth/server';
 import { prisma } from '@/lib/prisma'
 import { decryptSensitiveData } from '@/lib/encryption'
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await requireAuth(req)
+    const user = await requireAuth()
     
     if (!user || !(user as any).isAdmin) {
       return NextResponse.json(
@@ -146,7 +146,7 @@ export async function GET(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth()
     
     if (!session || !(session.user as any).isAdmin) {
       return NextResponse.json(

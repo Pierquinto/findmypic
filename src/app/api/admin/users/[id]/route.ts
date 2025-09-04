@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/admin/middleware'
+import { requireAdmin } from '@/lib/auth/server'
 import { prisma } from '@/lib/prisma'
 
 interface RouteParams {
@@ -10,8 +10,8 @@ interface RouteParams {
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    const adminUser = await requireAdmin(request)
-    if (adminUser instanceof NextResponse) return adminUser
+    await requireAdmin()
+    
 
     const user = await prisma.user.findUnique({
       where: { id: params.id },
@@ -56,8 +56,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
-    const adminUser = await requireAdmin(request)
-    if (adminUser instanceof NextResponse) return adminUser
+    const adminUser = await requireAdmin()
 
     const { action, data } = await request.json()
 
@@ -217,8 +216,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const adminUser = await requireAdmin(request)
-    if (adminUser instanceof NextResponse) return adminUser
+    const adminUser = await requireAdmin()
 
     // Check if user exists
     const user = await prisma.user.findUnique({

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth/server';
 import { prisma } from '@/lib/prisma'
 import { getUserMaxSearches, shouldResetSearches } from '@/lib/limits'
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const authUser = await requireAuth(request)
+    const authUser = await requireAuth()
     
     if (!authUser?.id) {
       return NextResponse.json(

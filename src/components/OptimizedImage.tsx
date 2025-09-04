@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Globe, AlertCircle } from 'lucide-react'
-import { useAuth } from '@/lib/auth-context'
+import { useAuth } from '@/lib/auth/client'
 
 interface ThumbnailImageProps {
   src: string

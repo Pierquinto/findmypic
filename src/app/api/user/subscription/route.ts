@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth/server';
 import { prisma } from '@/lib/prisma'
 
 // Create or update subscription
 export async function POST(req: NextRequest) {
   try {
-    const user = await requireAuth(req)
+    const user = await requireAuth()
     
     if (!user?.id) {
       return NextResponse.json(
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
 // Cancel subscription
 export async function DELETE() {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth()
     
     if (!session) {
       return NextResponse.json(

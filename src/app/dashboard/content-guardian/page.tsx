@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/client';
 import { useDropzone } from 'react-dropzone'
 import DashboardLayout from '@/components/DashboardLayout'
 import { 

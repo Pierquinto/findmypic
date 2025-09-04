@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/client';
 import Link from 'next/link'
 import Breadcrumb from '@/components/Breadcrumb'
 import SearchResults, { SearchResultItem } from '@/components/SearchResults'

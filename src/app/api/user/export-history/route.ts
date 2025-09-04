@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth/server';
 import { prisma } from '@/lib/prisma'
 import { decryptSensitiveData } from '@/lib/encryption'
 
 export async function GET(request: Request) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth()
     
     if (!user?.id) {
       return NextResponse.json(

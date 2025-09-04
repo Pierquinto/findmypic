@@ -3,7 +3,7 @@
 import { AlertTriangle, CheckCircle, ExternalLink, Globe, Bookmark, BookmarkCheck } from 'lucide-react'
 import ThumbnailImage from './OptimizedImage'
 import { useState } from 'react'
-import { useAuth } from '@/lib/auth-context'
+import { useAuth } from '@/lib/auth/client'
 
 export interface SearchResultItem {
   id: string

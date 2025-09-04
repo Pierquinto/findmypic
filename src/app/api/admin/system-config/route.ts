@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/admin/middleware'
+import { requireAdmin } from '@/lib/auth/server'
 import { prisma } from '@/lib/prisma'
 import { defaultSearchConfig } from '@/lib/search/config'
 
 export async function GET(request: NextRequest) {
   try {
-    const adminUser = await requireAdmin(request)
-    if (adminUser instanceof NextResponse) return adminUser
+    await requireAdmin()
+    
 
     // Get stored configuration
     const configs = await prisma.systemConfig.findMany()
@@ -111,8 +111,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const adminUser = await requireAdmin(request)
-    if (adminUser instanceof NextResponse) return adminUser
+    const adminUser = await requireAdmin()
 
     const config = await request.json()
 

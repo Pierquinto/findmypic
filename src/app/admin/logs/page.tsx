@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { 
@@ -85,7 +85,7 @@ export default function SystemLogs() {
       const response = await apiRequest(`/api/admin/logs?${params.toString()}`)
       if (response.ok) {
         const data = await response.json()
-        setLogs(data.logs)
+        setLogs(data?.logs || [])
       }
     } catch (error) {
       console.error('Error fetching logs:', error)

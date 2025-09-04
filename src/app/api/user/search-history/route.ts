@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerUser } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth/server';
 import { prisma } from '@/lib/prisma'
 import { decryptSensitiveData } from '@/lib/encryption'
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await getServerUser(req)
+    const user = await requireAuth()
     
     if (!user?.id) {
       return NextResponse.json(
@@ -79,7 +79,7 @@ export async function GET(req: NextRequest) {
 // Recupera una singola ricerca dalla cronologia
 export async function POST(req: NextRequest) {
   try {
-    const user = await getServerUser(req)
+    const user = await requireAuth()
     
     if (!user?.id) {
       return NextResponse.json(
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
       // Prima prova a decriptare i risultati completi se disponibili
       if (search.encryptedResults) {
         const decryptedData = decryptSensitiveData(search.encryptedResults)
-        const decryptedResults = typeof decryptedData === 'string' ? JSON.parse(decryptedData) : decryptedData
+        const decryptedResults = typeof decryptedData === 'string' ? JSON.parse(decryptedData) : decryptedResults
         
         if (decryptedResults && Array.isArray(decryptedResults)) {
           results = decryptedResults
@@ -189,7 +189,7 @@ export async function POST(req: NextRequest) {
 // Delete a search from history
 export async function DELETE(req: NextRequest) {
   try {
-    const user = await getServerUser(req)
+    const user = await requireAuth()
     
     if (!user?.id) {
       return NextResponse.json(

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/client';
 import { Shield, Clock, Search, AlertTriangle, Info, CheckCircle } from 'lucide-react'
 
 export default function CustomSearchPage() {

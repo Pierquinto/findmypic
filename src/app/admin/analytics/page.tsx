@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { 
@@ -100,12 +100,16 @@ export default function AnalyticsDashboard() {
     }
   }
 
-  if (!authLoading && user || loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
       </div>
     )
+  }
+
+  if (!user || !userProfile?.isAdmin) {
+    return null
   }
 
   return (

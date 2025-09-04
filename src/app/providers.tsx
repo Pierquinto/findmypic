@@ -1,6 +1,6 @@
 'use client'
 
-import { AuthProvider } from '@/lib/auth-context'
+import { AuthProvider } from '@/lib/auth/client'
 
 export function AuthProviderWrapper({
   children,

@@ -1,7 +1,7 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import Breadcrumb from './Breadcrumb'

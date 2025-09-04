@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerUser } from '@/lib/auth';
+import { getUser } from '@/lib/auth/server';
 import { prisma } from '@/lib/prisma'
 import { hasSearchesRemaining, getUserMaxSearches, shouldResetSearches } from '@/lib/limits'
 import { saveEncryptedSearch } from '@/lib/search/searchMiddleware'
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Try to get authenticated user (optional for anonymous searches)
-    const authUser = await getServerUser(req)
+    const authUser = await getUser()
     let user = null
     let userId = null
 
@@ -223,11 +223,11 @@ export async function POST(req: NextRequest) {
             providersFailures: [],
             message: 'Nessuna violazione trovata. Nessun provider di ricerca è attualmente disponibile.'
           },
-                  user: user ? {
-          searches: user.searches + 1,
-          maxSearches: getUserMaxSearches(user.plan, user.customSearchLimit),
-          plan: user.plan
-        } : null,
+          user: {
+            searches: user.searches + 1,
+            maxSearches,
+            plan: user.plan
+          },
           disclaimer: {
             searchMethod: 'automated_reverse_image_search',
             dataProtection: 'encrypted_storage_6_months',
@@ -380,14 +380,12 @@ export async function POST(req: NextRequest) {
       await logger.saveLogs('completed', resultsWithThumbnails.length)
 
       // Aggiorna il contatore delle ricerche dell'utente
-      if (user && userId) {
-        await prisma.user.update({
-          where: { id: userId },
-          data: {
-            searches: user.searches + 1
-          }
-        })
-      }
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          searches: user.searches + 1
+        }
+      })
       
       logger.logStep({ step: 'search_completed', success: true })
 
@@ -395,8 +393,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         searchId: savedSearchId,
         results: resultsWithThumbnails.map(result => {
-          const isPro = user?.plan === 'pro'
-          const isFree = user?.plan === 'free'
+          const isPro = user.plan === 'pro'
+          const isFree = user.plan === 'free'
           
           return {
             // Informazioni base disponibili per tutti

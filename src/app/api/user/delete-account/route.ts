@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth/server';
 import { prisma } from '@/lib/prisma'
 
 export async function DELETE(request: Request) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth()
     
     if (!user?.id) {
       return NextResponse.json(

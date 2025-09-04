@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { 
@@ -44,6 +44,7 @@ export default function UsersManagement() {
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [planFilter, setPlanFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -81,7 +82,7 @@ export default function UsersManagement() {
       const response = await apiRequest('/api/admin/users')
       if (response.ok) {
         const data = await response.json()
-        setUsers(data.users)
+        setUsers(data?.users || [])
       }
     } catch (error) {
       console.error('Error fetching users:', error)
@@ -96,7 +97,8 @@ export default function UsersManagement() {
       try {
         const response = await apiRequest(`/api/admin/users/${userId}`)
         if (response.ok) {
-          const { user } = await response.json()
+          const data = await response.json()
+          const user = data?.user
           setEditingUser(user)
           setEditForm({
             email: user.email,
@@ -112,6 +114,7 @@ export default function UsersManagement() {
             },
             newPassword: ''
           })
+          setError(null)
           setShowEditModal(true)
         }
       } catch (error) {
@@ -139,8 +142,10 @@ export default function UsersManagement() {
     if (!editingUser) return
 
     try {
+      setError(null)
+      
       // Update profile
-      await apiRequest(`/api/admin/users/${editingUser.id}`, {
+      const profileResponse = await apiRequest(`/api/admin/users/${editingUser.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -152,8 +157,13 @@ export default function UsersManagement() {
         })
       })
 
+      if (!profileResponse.ok) {
+        const errorData = await profileResponse.json()
+        throw new Error(errorData.error || 'Errore durante l\'aggiornamento del profilo')
+      }
+
       // Update search settings
-      await apiRequest(`/api/admin/users/${editingUser.id}`, {
+      const searchResponse = await apiRequest(`/api/admin/users/${editingUser.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -165,9 +175,14 @@ export default function UsersManagement() {
         })
       })
 
+      if (!searchResponse.ok) {
+        const errorData = await searchResponse.json()
+        throw new Error(errorData.error || 'Errore durante l\'aggiornamento dei limiti di ricerca')
+      }
+
       // Update password if provided
       if (editForm.newPassword) {
-        await apiRequest(`/api/admin/users/${editingUser.id}`, {
+        const passwordResponse = await apiRequest(`/api/admin/users/${editingUser.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -177,6 +192,11 @@ export default function UsersManagement() {
             }
           })
         })
+
+        if (!passwordResponse.ok) {
+          const errorData = await passwordResponse.json()
+          throw new Error(errorData.error || 'Errore durante l\'aggiornamento della password')
+        }
       }
 
       setShowEditModal(false)
@@ -184,6 +204,7 @@ export default function UsersManagement() {
       fetchUsers() // Refresh data
     } catch (error) {
       console.error('Error updating user:', error)
+      setError(error instanceof Error ? error.message : 'Errore durante l\'aggiornamento dell\'utente')
     }
   }
 
@@ -258,7 +279,7 @@ export default function UsersManagement() {
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Ricerche Totali</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {users.reduce((sum, u) => sum + u._count.Search, 0)}
+                  {users.reduce((sum, u) => sum + (u._count?.Search || 0), 0)}
                 </p>
               </div>
             </div>
@@ -466,6 +487,21 @@ export default function UsersManagement() {
                 Modifica Utente: {editingUser.email}
               </h2>
               
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-red-700">{error}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="space-y-6">
                 {/* Basic Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -655,6 +691,7 @@ export default function UsersManagement() {
                   onClick={() => {
                     setShowEditModal(false)
                     setEditingUser(null)
+                    setError(null)
                   }}
                   className="px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
                 >

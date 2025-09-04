@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth/server';
 import { prisma } from '@/lib/prisma'
 
 interface RouteParams {
@@ -9,7 +9,7 @@ interface RouteParams {
 // Update protected asset
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireAuth(req)
+    const user = await requireAuth()
     
     if (!user?.id) {
       return NextResponse.json(
@@ -60,7 +60,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 // Delete protected asset
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireAuth(req)
+    const user = await requireAuth()
     
     if (!user?.id) {
       return NextResponse.json(

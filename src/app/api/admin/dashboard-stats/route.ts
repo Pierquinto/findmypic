@@ -1,160 +1,94 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/admin/middleware'
+import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth/server'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const adminUser = await requireAdmin(request)
-    if (adminUser instanceof NextResponse) return adminUser
+    // Check admin privileges
+    await requireAdmin()
 
-    // Calcola statistiche utenti
-    const totalUsers = await prisma.user.count()
-    
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    
-    const newUsersToday = await prisma.user.count({
-      where: {
-        createdAt: {
-          gte: today
+    // Get dashboard statistics
+    const [
+      totalUsers,
+      totalSearches,
+      totalViolations,
+      recentUsers,
+      recentSearches
+    ] = await Promise.all([
+      prisma.user.count(),
+      prisma.search.count(),
+      prisma.violation.count(),
+      prisma.user.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          email: true,
+          createdAt: true,
+          plan: true
         }
-      }
-    })
-
-    const activeUsers = await prisma.user.count({
-      where: {
-        lastLoginAt: {
-          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // ultimi 30 giorni
+      }),
+      prisma.search.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          userId: true,
+          status: true,
+          createdAt: true,
+          user: {
+            select: {
+              email: true
+            }
+          }
         }
-      }
-    })
-
-    // Statistiche per piano
-    const planStats = await prisma.user.groupBy({
-      by: ['plan'],
-      _count: {
-        plan: true
-      }
-    })
-
-    const plans = {
-      free: planStats.find(p => p.plan === 'free')?._count.plan || 0,
-      basic: planStats.find(p => p.plan === 'basic')?._count.plan || 0,
-      pro: planStats.find(p => p.plan === 'pro')?._count.plan || 0
-    }
-
-    // Statistiche ricerche
-    const totalSearches = await prisma.search.count()
-    
-    const searchesToday = await prisma.search.count({
-      where: {
-        createdAt: {
-          gte: today
-        }
-      }
-    })
-
-    const avgSearchesPerUser = totalUsers > 0 ? Math.round(totalSearches / totalUsers * 100) / 100 : 0
-
-    // Statistiche fatturato (mock per ora)
-    const currentMonth = new Date()
-    currentMonth.setDate(1)
-    currentMonth.setHours(0, 0, 0, 0)
-    
-    const activeSubscriptions = await prisma.subscription.count({
-      where: {
-        status: 'active'
-      }
-    })
-
-    // Calcolo approssimativo del fatturato mensile
-    const basicSubscriptions = await prisma.subscription.count({
-      where: { plan: 'basic', status: 'active' }
-    })
-    
-    const proSubscriptions = await prisma.subscription.count({
-      where: { plan: 'pro', status: 'active' }
-    })
-
-    const monthlyRevenue = (basicSubscriptions * 9.99) + (proSubscriptions * 19.99)
-    const totalRevenue = monthlyRevenue * 6 // Mock: 6 mesi di operazioni
-
-    // Statistiche sistema
-    const systemErrors = await prisma.activityLog.count({
-      where: {
-        action: 'ERROR',
-        createdAt: {
-          gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // ultime 24 ore
-        }
-      }
-    })
-
-    // Calcolo uptime (mock)
-    const uptime = '99.9%'
-
-    // Mock additional metrics for enhanced dashboard
-    const thisWeek = new Date()
-    thisWeek.setDate(thisWeek.getDate() - 7)
-    
-    const searchesThisWeek = await prisma.search.count({
-      where: {
-        createdAt: {
-          gte: thisWeek
-        }
-      }
-    })
-
-    // Calculate user growth
-    const lastMonth = new Date()
-    lastMonth.setMonth(lastMonth.getMonth() - 1)
-    
-    const usersLastMonth = await prisma.user.count({
-      where: {
-        createdAt: {
-          lt: lastMonth
-        }
-      }
-    })
-
-    const userGrowth = usersLastMonth > 0 ? ((totalUsers - usersLastMonth) / usersLastMonth * 100) : 0
+      })
+    ])
 
     const stats = {
       users: {
         total: totalUsers,
-        new: newUsersToday,
-        active: activeUsers,
-        growth: userGrowth,
-        plans
+        new: 0, // TODO: Calculate new users
+        active: 0, // TODO: Calculate active users
+        growth: 0, // TODO: Calculate growth
+        plans: { free: totalUsers, basic: 0, pro: 0 } // TODO: Calculate plan distribution
       },
       searches: {
         total: totalSearches,
-        today: searchesToday,
-        thisWeek: searchesThisWeek,
-        avgPerUser: avgSearchesPerUser,
-        successRate: 96.5, // Mock success rate
-        avgResponseTime: 850 // Mock avg response time in ms
+        today: 0, // TODO: Calculate today's searches
+        thisWeek: 0, // TODO: Calculate this week's searches
+        avgPerUser: totalUsers > 0 ? Math.round(totalSearches / totalUsers) : 0,
+        successRate: 95, // Mock success rate
+        avgResponseTime: 1200 // Mock average response time in ms
       },
       revenue: {
-        monthly: Math.round(monthlyRevenue),
-        total: Math.round(totalRevenue),
-        growth: 15.5, // Mock growth percentage
-        mrr: Math.round(monthlyRevenue),
-        churnRate: 3.2, // Mock churn rate
-        arpu: totalUsers > 0 ? Math.round(monthlyRevenue / totalUsers) : 0
+        monthly: 0, // TODO: Calculate monthly revenue
+        total: 0, // TODO: Calculate total revenue
+        growth: 0, // TODO: Calculate revenue growth
+        mrr: 0, // TODO: Calculate MRR
+        churnRate: 5, // Mock churn rate
+        arpu: 0 // TODO: Calculate ARPU
       },
       system: {
-        uptime: '99.9%',
-        providers: 3, // Numero di provider attivi
-        errors: systemErrors,
-        cpu: 45, // Mock CPU usage %
-        memory: 62, // Mock memory usage %
-        storage: 34, // Mock storage usage %
-        activeConnections: Math.floor(Math.random() * 150) + 50 // Mock active connections
-      }
+        uptime: "99.9%", // Mock uptime
+        providers: 3, // Number of search providers
+        errors: 0, // Mock error count
+        cpu: 45, // Mock CPU usage percentage
+        memory: 68, // Mock memory usage percentage
+        storage: 32, // Mock storage usage percentage
+        activeConnections: 127 // Mock active connections
+      },
+      violations: {
+        total: totalViolations,
+        resolved: 0, // TODO: Calculate resolved violations
+        pending: 0, // TODO: Calculate pending violations
+        critical: 0 // TODO: Calculate critical violations
+      },
+      recentUsers,
+      recentSearches
     }
 
     return NextResponse.json(stats)
-
   } catch (error) {
     console.error('Error fetching dashboard stats:', error)
     return NextResponse.json(

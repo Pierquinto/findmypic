@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { signIn } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,28 +14,32 @@ export async function POST(req: NextRequest) {
     }
 
     console.log('Authenticating with Supabase Auth...')
-    const result = await signIn(email, password)
+    const supabase = createClient()
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    })
     
-    if (!result.session) {
+    if (error || !data.session) {
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
       )
     }
 
-    console.log('Login successful:', result.user.id)
+    console.log('Login successful:', data.user.id)
 
     return NextResponse.json({
       message: 'Login successful',
       user: {
-        id: result.user.id,
-        email: result.user.email,
-        emailVerified: result.user.email_confirmed_at !== null
+        id: data.user.id,
+        email: data.user.email,
+        emailVerified: data.user.email_confirmed_at !== null
       },
       session: {
-        access_token: result.session.access_token,
-        refresh_token: result.session.refresh_token,
-        expires_at: result.session.expires_at
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+        expires_at: data.session.expires_at
       }
     })
   } catch (error) {

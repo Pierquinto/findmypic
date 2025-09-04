@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/admin/AdminLayout'
 import ThumbnailImage from '@/components/OptimizedImage'
@@ -278,10 +278,10 @@ export default function ImagesUploaded() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-slate-600">Immagini Totali</p>
-                  <p className="text-3xl font-bold text-slate-900">{stats.totalImages.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-slate-900">{stats?.totalImages?.toLocaleString() || '0'}</p>
                   <div className="flex items-center mt-1">
                     <Calendar className="h-4 w-4 text-green-500 mr-1" />
-                    <span className="text-green-600 text-sm font-medium">{stats.todayImages} oggi</span>
+                    <span className="text-green-600 text-sm font-medium">{stats?.todayImages || 0} oggi</span>
                   </div>
                 </div>
               </div>

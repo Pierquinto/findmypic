@@ -1,104 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerUser } from '@/lib/auth';
-import { prisma } from '@/lib/prisma'
+import { NextResponse } from 'next/server'
+import { getUser } from '@/lib/auth/server'
 
-// Get user profile
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const authUser = await getServerUser(request)
-    
-    if (!authUser?.id) {
-      return NextResponse.json(
-        { error: 'Accesso non autorizzato' },
-        { status: 401 }
-      )
-    }
-
-    const userId = authUser.id
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        profile: true
-      }
-    })
+    const user = await getUser()
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Utente non trovato' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Accesso non autorizzato' }, { status: 401 })
     }
 
-    return NextResponse.json({
-      id: user.id,
-      email: user.email,
-      plan: user.plan,
-      searches: user.searches,
-      createdAt: user.createdAt,
-      isAdmin: user.isAdmin,
-      role: user.role,
-      permissions: user.permissions,
-      profile: user.profile
-    })
-
+    return NextResponse.json(user)
   } catch (error) {
     console.error('Error fetching profile:', error)
-    return NextResponse.json(
-      { error: 'Errore interno del server' },
-      { status: 500 }
-    )
-  }
-}
-
-// Update user profile
-export async function PUT(req: NextRequest) {
-  try {
-    const authUser = await getServerUser(req)
-    
-    if (!authUser?.id) {
-      return NextResponse.json(
-        { error: 'Accesso non autorizzato' },
-        { status: 401 }
-      )
-    }
-
-    const userId = authUser.id
-    const { firstName, lastName, company, phone, website, bio } = await req.json()
-
-    // Update or create profile
-    const profile = await prisma.userProfile.upsert({
-      where: { userId },
-      update: {
-        firstName: firstName || null,
-        lastName: lastName || null,
-        company: company || null,
-        phone: phone || null,
-        website: website || null,
-        bio: bio || null
-      },
-      create: {
-        userId,
-        firstName: firstName || null,
-        lastName: lastName || null,
-        company: company || null,
-        phone: phone || null,
-        website: website || null,
-        bio: bio || null
-      }
-    })
-
-    return NextResponse.json({
-      success: true,
-      message: 'Profilo aggiornato con successo',
-      profile
-    })
-
-  } catch (error) {
-    console.error('Error updating profile:', error)
-    return NextResponse.json(
-      { error: 'Errore nell\'aggiornamento del profilo' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Errore interno del server' }, { status: 500 })
   }
 }

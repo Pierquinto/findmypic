@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/admin/middleware'
+import { requireAdmin } from '@/lib/auth/server'
 import { prisma } from '@/lib/prisma'
 import { SearchEngineFactory } from '@/lib/search/SearchEngineFactory'
 
 export async function GET(request: NextRequest) {
   try {
-    const adminUser = await requireAdmin(request)
-    if (adminUser instanceof NextResponse) return adminUser
+    await requireAdmin()
+    
 
     // Statistiche dalle ricerche nel database
     const today = new Date()
@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
 // Endpoint per pulire la cache
 export async function DELETE(request: NextRequest) {
   try {
-    const user = await requireAuth(request)
+    const user = await requireAuth()
     
     if (!user || !(user as any).isAdmin) {
       return NextResponse.json(

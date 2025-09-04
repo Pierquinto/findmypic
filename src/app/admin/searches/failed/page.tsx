@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/client';
 import { useRouter } from 'next/navigation'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { 
@@ -286,10 +286,10 @@ export default function FailedSearches() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm font-medium text-slate-600">Ricerche Fallite</p>
-                  <p className="text-3xl font-bold text-slate-900">{stats.totalFailed.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-slate-900">{stats?.totalFailed?.toLocaleString() || '0'}</p>
                   <div className="flex items-center mt-1">
                     <Calendar className="h-4 w-4 text-red-500 mr-1" />
-                    <span className="text-red-600 text-sm font-medium">{stats.todayFailed} oggi</span>
+                    <span className="text-red-600 text-sm font-medium">{stats?.todayFailed || 0} oggi</span>
                   </div>
                 </div>
               </div>

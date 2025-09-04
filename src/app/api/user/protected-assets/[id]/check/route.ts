@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth';
+import { requireAuth } from '@/lib/auth/server';
 import { prisma } from '@/lib/prisma'
 import { GoogleVisionProvider } from '@/lib/search/providers/GoogleVisionProvider'
 import { ProprietaryProvider } from '@/lib/search/providers/ProprietaryProvider'
@@ -14,7 +14,7 @@ interface RouteParams {
 // Run manual monitoring check for protected asset
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
-    const user = await requireAuth(req)
+    const user = await requireAuth()
     
     if (!user?.id) {
       return NextResponse.json(
