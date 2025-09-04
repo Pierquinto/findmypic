@@ -37,30 +37,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
 
   useEffect(() => {
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
-      
-      if (session?.user) {
-        await fetchUserProfile(session.user)
-      }
-      
+    // Check if Supabase environment variables are available
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.warn('Missing Supabase environment variables, auth provider will not work')
       setLoading(false)
+      return
+    }
+
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Error getting session:', error)
+          setLoading(false)
+          return
+        }
+        
+        setUser(session?.user ?? null)
+        
+        if (session?.user) {
+          await fetchUserProfile(session.user)
+        }
+        
+        setLoading(false)
+      } catch (error) {
+        console.error('Error in getInitialSession:', error)
+        setLoading(false)
+      }
     }
 
     getInitialSession()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user ?? null)
-        
-        if (session?.user) {
-          await fetchUserProfile(session.user)
-        } else {
-          setUserProfile(null)
+        try {
+          setUser(session?.user ?? null)
+          
+          if (session?.user) {
+            await fetchUserProfile(session.user)
+          } else {
+            setUserProfile(null)
+          }
+          
+          setLoading(false)
+        } catch (error) {
+          console.error('Error in auth state change:', error)
+          setLoading(false)
         }
-        
-        setLoading(false)
       }
     )
 
