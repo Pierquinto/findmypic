@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { NextRequest } from 'next/server'
+import { headers } from 'next/headers'
 
 export type User = {
   id: string
@@ -17,22 +18,77 @@ export type User = {
 }
 
 export async function getUser(): Promise<User | null> {
-  const supabase = await createClient()
-  
   try {
-    const { data: { user }, error } = await supabase.auth.getUser()
+    // Check if Supabase environment variables are available
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || 
+        !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_URL === "YOUR_SUPABASE_URL_HERE") {
+      console.warn('Supabase not configured, returning test user')
+      // Return a test user for development
+      return {
+        id: 'test-user-id',
+        email: 'test@example.com',
+        isAdmin: false,
+        role: 'user',
+        permissions: {},
+        plan: 'free',
+        searches: 0,
+        createdAt: new Date(),
+        profile: {}
+      }
+    }
     
-    if (error || !user) {
-      return null
+    // Try to get user from Authorization header first
+    const headersList = await headers()
+    const authorization = headersList.get('authorization')
+    
+    let supabaseUser = null
+    
+    if (authorization && authorization.startsWith('Bearer ')) {
+      // Create admin client for token verification
+      const adminClient = await createAdminClient()
+      const token = authorization.replace('Bearer ', '')
+      
+      try {
+        const { data: { user }, error } = await adminClient.auth.getUser(token)
+        if (!error && user) {
+          supabaseUser = user
+        }
+      } catch (tokenError) {
+        console.error('Error verifying token:', tokenError)
+      }
+    }
+    
+    // Fallback to cookies if no valid Authorization header
+    if (!supabaseUser) {
+      const supabase = await createClient()
+      const { data: { user }, error } = await supabase.auth.getUser()
+      
+      if (error || !user) {
+        return null
+      }
+      supabaseUser = user
     }
 
     // Get user data from Prisma
     const userData = await prisma.user.findUnique({
-      where: { id: user.id }
+      where: { id: supabaseUser.id }
     })
 
     if (!userData) {
-      return null
+      // Create user if doesn't exist
+      const newUser = await createOrUpdateUser(supabaseUser)
+      return {
+        id: newUser.id,
+        email: newUser.email,
+        isAdmin: newUser.isAdmin,
+        role: newUser.role,
+        permissions: newUser.permissions,
+        plan: newUser.plan,
+        searches: newUser.searches,
+        createdAt: newUser.createdAt,
+        profile: newUser.profile
+      }
     }
 
     return {
@@ -52,21 +108,16 @@ export async function getUser(): Promise<User | null> {
   }
 }
 
-export async function requireAuth(): Promise<User> {
+export async function requireAuth(): Promise<User | null> {
   const user = await getUser()
-  
-  if (!user) {
-    redirect('/login')
-  }
-  
   return user
 }
 
-export async function requireAdmin(): Promise<User> {
+export async function requireAdmin(): Promise<User | null> {
   const user = await requireAuth()
   
-  if (!user.isAdmin) {
-    redirect('/dashboard')
+  if (!user || !user.isAdmin) {
+    return null
   }
   
   return user

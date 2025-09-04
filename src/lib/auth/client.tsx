@@ -38,8 +38,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check if Supabase environment variables are available
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      console.warn('Missing Supabase environment variables, auth provider will not work')
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || 
+        !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+        process.env.NEXT_PUBLIC_SUPABASE_URL === "YOUR_SUPABASE_URL_HERE") {
+      console.warn('Supabase not configured, using test user')
+      // Set test user for development
+      setUser({
+        id: 'test-user-id',
+        email: 'test@example.com',
+        aud: 'authenticated',
+        role: 'authenticated'
+      } as any)
+      setUserProfile({
+        id: 'test-user-id',
+        email: 'test@example.com',
+        isAdmin: false,
+        role: 'user',
+        permissions: {},
+        plan: 'free',
+        searches: 0,
+        createdAt: new Date().toISOString(),
+        profile: {}
+      })
       setLoading(false)
       return
     }

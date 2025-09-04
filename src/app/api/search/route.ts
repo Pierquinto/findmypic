@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     const logger = new SearchLogger(searchId, {
       searchId,
       userId,
-      email: user.email,
+      email: user?.email || null,
       imageData,
       imageHash: createDataHash(imageData),
       ipAddress,
@@ -223,11 +223,11 @@ export async function POST(req: NextRequest) {
             providersFailures: [],
             message: 'Nessuna violazione trovata. Nessun provider di ricerca è attualmente disponibile.'
           },
-          user: {
+          user: user ? {
             searches: user.searches + 1,
             maxSearches,
             plan: user.plan
-          },
+          } : null,
           disclaimer: {
             searchMethod: 'automated_reverse_image_search',
             dataProtection: 'encrypted_storage_6_months',
@@ -379,13 +379,15 @@ export async function POST(req: NextRequest) {
       // Salva logs dettagliati DOPO aver creato il Search record
       await logger.saveLogs('completed', resultsWithThumbnails.length)
 
-      // Aggiorna il contatore delle ricerche dell'utente
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          searches: user.searches + 1
-        }
-      })
+      // Aggiorna il contatore delle ricerche dell'utente (solo se autenticato)
+      if (user && userId) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            searches: user.searches + 1
+          }
+        })
+      }
       
       logger.logStep({ step: 'search_completed', success: true })
 
@@ -393,8 +395,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         searchId: savedSearchId,
         results: resultsWithThumbnails.map(result => {
-          const isPro = user.plan === 'pro'
-          const isFree = user.plan === 'free'
+          const isPro = user?.plan === 'pro'
+          const isFree = user?.plan === 'free'
           
           return {
             // Informazioni base disponibili per tutti
