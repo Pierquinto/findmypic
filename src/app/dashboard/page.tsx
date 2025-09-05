@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/lib/auth/client';
+import { useApiRequest } from '@/hooks/useApiRequest'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -41,6 +42,7 @@ type DashboardData = {
 
 export default function DashboardPage() {
   const { user, loading: authLoading  } = useAuth()
+  const apiRequest = useApiRequest()
   const router = useRouter()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -56,20 +58,20 @@ export default function DashboardPage() {
     if (user) {
       fetchDashboardData()
     }
-  }, [user, authLoading, router])
+  }, [user, authLoading, router, apiRequest])
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch user info
-      const userResponse = await fetch('/api/user/billing')
+      // Fetch user info with proper authentication
+      const userResponse = await apiRequest('/api/user/billing')
       const userData = userResponse.ok ? await userResponse.json() : null
 
-      // Fetch recent searches
-      const searchResponse = await fetch('/api/user/search-history?limit=5')
+      // Fetch recent searches with proper authentication
+      const searchResponse = await apiRequest('/api/user/search-history?limit=5')
       const searchData = searchResponse.ok ? await searchResponse.json() : { searches: [] }
 
-      // Fetch protected assets
-      const assetsResponse = await fetch('/api/user/protected-assets')
+      // Fetch protected assets with proper authentication
+      const assetsResponse = await apiRequest('/api/user/protected-assets')
       const assetsData = assetsResponse.ok ? await assetsResponse.json() : { assets: [], stats: {} }
 
       setDashboardData({

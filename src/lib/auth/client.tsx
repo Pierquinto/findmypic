@@ -140,15 +140,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserProfile = async (user: User) => {
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      
       const response = await fetch('/api/user/profile', {
+        credentials: 'include', // Ensure cookies are sent
         headers: {
-          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+          'Content-Type': 'application/json',
+          ...(session?.access_token && {
+            'Authorization': `Bearer ${session.access_token}`
+          })
         }
       })
+      
+      console.log('[AUTH] Profile fetch response:', response.status)
       
       if (response.ok) {
         const profile = await response.json()
         setUserProfile(profile)
+        console.log('[AUTH] Profile loaded successfully:', profile.email)
+      } else {
+        console.log('[AUTH] Profile fetch failed:', response.status, await response.text())
       }
       // Always set loading to false after profile fetch attempt
       setLoading(false)
@@ -204,6 +215,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return fetch(url, {
       ...options,
+      credentials: 'include', // Always include cookies for API requests
       headers
     })
   }
