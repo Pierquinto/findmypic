@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getUser } from '@/lib/auth/server'
 import { prisma } from '@/lib/prisma'
 import { hasSearchesRemaining, getUserMaxSearches, shouldResetSearches } from '@/lib/limits'
+import { GoogleVisionProvider } from '@/lib/search/providers/GoogleVisionProvider'
 import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(req: NextRequest) {
@@ -81,22 +82,134 @@ export async function POST(req: NextRequest) {
     const searchId = uuidv4()
     const searchStartTime = Date.now()
 
-    // For now, return mock results to test if the API works
-    const mockResults = [
-      {
-        id: '1',
-        url: 'https://example.com/image1.jpg',
-        siteName: 'Example Site',
-        title: 'Test Result 1',
-        similarity: 95,
-        status: 'found',
-        provider: 'test',
-        thumbnail: null,
-        metadata: {}
+    // Initialize available providers
+    const availableProviders: { name: string, provider: any }[] = []
+
+    // Google Vision API if configured
+    const googleApiKey = process.env.GOOGLE_VISION_API_KEY
+    console.log(`[Search] Google Vision API Key configured: ${googleApiKey ? 'YES' : 'NO'}`)
+    
+    if (googleApiKey) {
+      try {
+        console.log(`[Search] Initializing Google Vision provider...`)
+        
+        const googleProvider = new GoogleVisionProvider(googleApiKey)
+        console.log(`[Search] Testing Google Vision availability...`)
+        
+        const isAvailable = await googleProvider.isAvailable()
+        console.log(`[Search] Google Vision available: ${isAvailable}`)
+        
+        if (isAvailable) {
+          availableProviders.push({ name: 'google_vision', provider: googleProvider })
+          console.log(`[Search] Google Vision added to available providers`)
+        }
+      } catch (error) {
+        console.error(`[Search] Google Vision error:`, error)
       }
-    ]
+    }
+
+    console.log(`[Search] Available providers: ${availableProviders.length}`)
+
+    // If no providers available, return empty results
+    if (availableProviders.length === 0) {
+      console.log('[Search] No providers available')
+      return NextResponse.json({
+        searchId,
+        results: [],
+        metadata: {
+          totalResults: 0,
+          searchTime: Date.now() - searchStartTime,
+          providersUsed: [],
+          searchType,
+          securityLevel,
+          providersFailures: [],
+          message: 'Nessun provider di ricerca disponibile al momento.'
+        },
+        user: user ? {
+          searches: user.searches + 1,
+          maxSearches: getUserMaxSearches(user.plan, user.customSearchLimit),
+          plan: user.plan
+        } : null,
+        disclaimer: {
+          searchMethod: 'reverse_image_search',
+          description: 'Ricerca inversa immagini',
+          coverage: 'Nessun provider disponibile',
+          dataProtection: 'encrypted_storage_6_months'
+        }
+      })
+    }
+
+    // Prepare search query
+    const userPlan = user?.plan || 'anonymous'
+    const searchQuery = {
+      imageData,
+      searchType,
+      userPlan,
+      options: {
+        maxResults: userPlan === 'free' ? 10 : userPlan === 'basic' ? 25 : userPlan === 'pro' ? 50 : 5,
+        similarityThreshold: searchType === 'copyright_detection' ? 85 : 75,
+        includeSafeSearch: true,
+        includeAdultSites: userPlan !== 'free' && userPlan !== 'anonymous'
+      }
+    }
+
+    // Execute search on all available providers
+    let allResults: any[] = []
+    const providersUsed: string[] = []
+    const providersFailures: string[] = []
+
+    for (const { name, provider } of availableProviders) {
+      try {
+        console.log(`[Search] Starting search with ${provider.name}...`)
+        
+        const providerStartTime = Date.now()
+        const providerResults = await provider.search(searchQuery)
+        const providerDuration = Date.now() - providerStartTime
+        
+        if (providerResults && Array.isArray(providerResults)) {
+          allResults = allResults.concat(providerResults)
+          providersUsed.push(name)
+          console.log(`[Search] ${provider.name}: Found ${providerResults.length} results in ${providerDuration}ms`)
+        } else {
+          console.log(`[Search] ${provider.name}: No results found in ${providerDuration}ms`)
+        }
+      } catch (error) {
+        console.error(`[Search] ${provider.name} failed:`, error)
+        providersFailures.push(name)
+      }
+    }
 
     const searchTime = Date.now() - searchStartTime
+
+    // Remove duplicates and sort by similarity
+    const uniqueResults = allResults
+      .filter((result, index, self) => 
+        index === self.findIndex(r => r.url === result.url)
+      )
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, searchQuery.options.maxResults)
+
+    console.log(`[Search] Final results: ${uniqueResults.length}`)
+
+    // Save search to database (simplified without encryption for now)
+    try {
+      await prisma.search.create({
+        data: {
+          id: searchId,
+          userId: userId || null,
+          searchType,
+          status: 'completed',
+          resultsCount: uniqueResults.length,
+          searchTime,
+          providersUsed: providersUsed.reduce((acc, p) => { acc[p] = true; return acc }, {}),
+          ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
+          userAgent: req.headers.get('user-agent') || 'unknown'
+        }
+      })
+    } catch (dbError) {
+      console.error('Error saving search to database:', dbError)
+      // Continue anyway - don't fail the search because of DB issues
+    }
 
     // Update user search count if authenticated
     if (user && userId) {
@@ -112,29 +225,30 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       searchId,
-      results: mockResults.map(result => {
+      results: uniqueResults.map(result => {
         const isPro = user?.plan === 'pro'
         const isFree = user?.plan === 'free'
         
         return {
           // Basic info for all users
-          id: result.id,
-          siteName: result.siteName,
-          similarity: result.similarity,
-          status: result.status,
-          provider: result.provider,
-          thumbnail: result.thumbnail,
-          title: !isFree ? result.title : 'Risultato trovato',
+          id: result.id || uuidv4(),
+          siteName: result.siteName || 'Unknown Site',
+          similarity: result.similarity || 0,
+          status: result.status || 'found',
+          provider: result.provider || 'google_vision',
+          thumbnail: result.thumbnail || null,
+          title: !isFree ? (result.title || 'Found Image') : 'Risultato trovato',
           
           // Pro users get full access
           ...(isPro && {
             imageUrl: result.url,
-            webPageUrl: result.url
+            webPageUrl: result.webPageUrl || result.url
           }),
           
           // Basic users get basic access
           ...(!isFree && !isPro && {
-            url: result.url
+            url: result.url,
+            webPageUrl: result.webPageUrl
           }),
           
           // Free users get preview only
@@ -148,13 +262,13 @@ export async function POST(req: NextRequest) {
         }
       }),
       metadata: {
-        totalResults: mockResults.length,
+        totalResults: uniqueResults.length,
         searchTime,
-        providersUsed: ['test'],
+        providersUsed,
         searchType,
         securityLevel,
-        providersFailures: [],
-        message: `Trovati ${mockResults.length} risultati di test.`
+        providersFailures,
+        message: uniqueResults.length === 0 ? 'Nessuna violazione trovata nei database disponibili.' : `Trovati ${uniqueResults.length} possibili match.`
       },
       user: user ? {
         searches: user.searches + 1,
@@ -162,9 +276,9 @@ export async function POST(req: NextRequest) {
         plan: user.plan
       } : null,
       disclaimer: {
-        searchMethod: 'test_search',
-        description: 'Ricerca di test per verificare funzionalità API',
-        coverage: 'Provider di test',
+        searchMethod: 'reverse_image_search',
+        description: 'Ricerca automatica inversa su Google Vision API',
+        coverage: `Provider attivi: ${providersUsed.join(', ')}`,
         dataProtection: 'encrypted_storage_6_months',
         dataRetention: user?.plan === 'free' ? '6_months_automatic' : user ? 'user_controlled' : 'anonymous_session_only'
       }
