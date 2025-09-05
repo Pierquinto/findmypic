@@ -155,14 +155,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userEmail: session?.user?.email
       })
       
+      // Use the same approach as useApiRequest for consistency
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      }
+      
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+        console.log(`[AUTH] Added auth header to profile fetch: Bearer ${session.access_token.substring(0, 20)}...`)
+      } else {
+        console.warn('[AUTH] No access token found for profile fetch')
+      }
+      
       const response = await fetch('/api/user/profile', {
         credentials: 'include', // Ensure cookies are sent
-        headers: {
-          'Content-Type': 'application/json',
-          ...(session?.access_token && {
-            'Authorization': `Bearer ${session.access_token}`
-          })
-        }
+        headers
       })
       
       console.log('[AUTH] Profile fetch response:', response.status)

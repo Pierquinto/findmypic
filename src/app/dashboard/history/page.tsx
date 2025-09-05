@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth/client';
+import { useApiRequest } from '@/hooks/useApiRequest'
 import { useRouter } from 'next/navigation'
 import DashboardLayout from '@/components/DashboardLayout'
 import ThumbnailImage from '@/components/OptimizedImage'
@@ -42,7 +43,8 @@ interface FilterState {
 }
 
 export default function HistoryPage() {
-  const { user, loading: authLoading, apiRequest } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+  const apiRequest = useApiRequest()
   const router = useRouter()
   const [searches, setSearches] = useState<SearchHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -61,7 +63,7 @@ export default function HistoryPage() {
     if (user) {
       fetchSearchHistory()
     }
-  }, [filters, pagination.offset, user])
+  }, [filters, pagination.offset, user, apiRequest])
 
   const fetchSearchHistory = async () => {
     setLoading(true)
@@ -107,9 +109,8 @@ export default function HistoryPage() {
     if (!confirm('Sei sicuro di voler eliminare questa ricerca dalla cronologia?')) return
 
     try {
-      const response = await fetch('/api/user/search-history', {
+      const response = await apiRequest('/api/user/search-history', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ searchId })
       })
 
@@ -126,7 +127,7 @@ export default function HistoryPage() {
 
   const exportHistory = async () => {
     try {
-      const response = await fetch('/api/user/export-history')
+      const response = await apiRequest('/api/user/export-history')
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)

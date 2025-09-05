@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth/client';
+import { useApiRequest } from '@/hooks/useApiRequest'
 import DashboardLayout from '@/components/DashboardLayout'
 import { 
   User, 
