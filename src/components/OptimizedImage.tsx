@@ -82,7 +82,7 @@ export default function ThumbnailImage({
     
     // Check if it's an external URL that might need proxying
     const isExternalImage = src && (src.startsWith('http://') || src.startsWith('https://'))
-    const isFromSocialPlatform = isExternalImage && (
+    const isFromSocialPlatform = isExternalImage && src && (
       src.includes('facebook.com') ||
       src.includes('instagram.com') ||
       src.includes('tiktok.com') ||
