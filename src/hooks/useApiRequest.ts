@@ -19,22 +19,62 @@ export function useApiRequest() {
       }
     }
     
-    // If we have a user, try to add the auth token
+    // If we have a user, try to add the auth token from Supabase client
     if (user && typeof window !== 'undefined') {
       try {
-        // Get fresh session from localStorage or Supabase
-        const supabaseSession = localStorage.getItem('supabase.auth.token')
-        if (supabaseSession) {
-          const parsed = JSON.parse(supabaseSession)
-          if (parsed.access_token) {
-            defaultOptions.headers = {
-              ...defaultOptions.headers,
-              'Authorization': `Bearer ${parsed.access_token}`
+        // Try multiple approaches to get the token
+        let accessToken = null
+        
+        // Method 1: Check localStorage with different possible keys
+        const possibleKeys = [
+          'supabase.auth.token',
+          'sb-kxcenxzibosbtmedhjez-auth-token',
+          'sb-auth-token'
+        ]
+        
+        for (const key of possibleKeys) {
+          const stored = localStorage.getItem(key)
+          if (stored) {
+            const parsed = JSON.parse(stored)
+            if (parsed.access_token) {
+              accessToken = parsed.access_token
+              console.log(`[API] Found token in localStorage key: ${key}`)
+              break
+            } else if (parsed.session?.access_token) {
+              accessToken = parsed.session.access_token
+              console.log(`[API] Found token in session from key: ${key}`)
+              break
             }
           }
         }
+        
+        // Method 2: Try to get from Supabase client directly
+        if (!accessToken) {
+          try {
+            // Import and use Supabase client
+            const { createClient } = await import('@/lib/supabase/client')
+            const supabase = createClient()
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session?.access_token) {
+              accessToken = session.access_token
+              console.log('[API] Found token from Supabase client session')
+            }
+          } catch (clientError) {
+            console.warn('[API] Could not get session from Supabase client:', clientError)
+          }
+        }
+        
+        if (accessToken) {
+          defaultOptions.headers = {
+            ...defaultOptions.headers,
+            'Authorization': `Bearer ${accessToken}`
+          }
+        } else {
+          console.warn('[API] No access token found through any method')
+        }
+        
       } catch (error) {
-        console.warn('Could not get auth token from localStorage:', error)
+        console.warn('Could not get auth token:', error)
       }
     }
     

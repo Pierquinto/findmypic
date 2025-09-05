@@ -140,7 +140,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserProfile = async (user: User) => {
     try {
+      // Debug auth state when fetching profile
+      if (typeof window !== 'undefined' && window.location.hostname.includes('findmypic.app')) {
+        const { debugAuthState } = await import('@/utils/debugAuth')
+        debugAuthState()
+      }
+      
       const { data: { session } } = await supabase.auth.getSession()
+      
+      console.log('[AUTH] Session for profile fetch:', {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        hasAccessToken: !!session?.access_token,
+        userEmail: session?.user?.email
+      })
       
       const response = await fetch('/api/user/profile', {
         credentials: 'include', // Ensure cookies are sent
