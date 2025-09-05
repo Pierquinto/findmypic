@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getUser } from '@/lib/auth/server'
+import { getUser, updateUserAdminStatus } from '@/lib/auth/server'
 
 export async function GET() {
   try {
@@ -39,12 +39,28 @@ export async function POST(req: NextRequest) {
     const currentUser = await getUser()
     console.log('Current user making admin request:', currentUser?.email)
 
-    const user = await prisma.user.update({
+    // Find user by email first
+    const targetUser = await prisma.user.findUnique({
       where: { email },
-      data: {
-        isAdmin: makeAdmin === true,
-        role: makeAdmin === true ? 'admin' : 'user'
-      },
+      select: { id: true, email: true }
+    })
+
+    if (!targetUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // Use the new updateUserAdminStatus function that updates both Prisma and Supabase
+    const success = await updateUserAdminStatus(targetUser.id, makeAdmin === true)
+
+    if (!success) {
+      return NextResponse.json({ 
+        error: 'Failed to update admin status in Supabase metadata'
+      }, { status: 500 })
+    }
+
+    // Fetch updated user data
+    const updatedUser = await prisma.user.findUnique({
+      where: { id: targetUser.id },
       select: {
         id: true,
         email: true,
@@ -54,8 +70,8 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({
-      message: `User ${email} ${makeAdmin ? 'granted' : 'removed'} admin privileges`,
-      user
+      message: `User ${email} ${makeAdmin ? 'granted' : 'removed'} admin privileges (Prisma + Supabase metadata updated)`,
+      user: updatedUser
     })
   } catch (error) {
     console.error('Debug admin update error:', error)

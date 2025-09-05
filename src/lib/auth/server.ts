@@ -70,32 +70,41 @@ export async function getUser(): Promise<User | null> {
       supabaseUser = user
     }
 
-    // Get user data from Prisma
-    const userData = await prisma.user.findUnique({
+    // Get user data from Prisma, but also use Supabase user metadata for admin status
+    let userData = await prisma.user.findUnique({
       where: { id: supabaseUser.id }
     })
 
     if (!userData) {
       // Create user if doesn't exist
-      const newUser = await createOrUpdateUser(supabaseUser)
-      return {
-        id: newUser.id,
-        email: newUser.email,
-        isAdmin: newUser.isAdmin,
-        role: newUser.role,
-        permissions: newUser.permissions,
-        plan: newUser.plan,
-        searches: newUser.searches,
-        createdAt: newUser.createdAt,
-        profile: newUser.profile
-      }
+      userData = await createOrUpdateUser(supabaseUser)
     }
+
+    // Best practice: Use Supabase user_metadata for role information (primary source)
+    // Fall back to Prisma data if metadata not available
+    const isAdminFromSupabase = supabaseUser.user_metadata?.isAdmin === true || 
+                               supabaseUser.user_metadata?.role === 'admin' ||
+                               supabaseUser.app_metadata?.role === 'admin'
+    
+    const roleFromSupabase = supabaseUser.user_metadata?.role || 
+                            supabaseUser.app_metadata?.role ||
+                            userData.role
+
+    console.log('Admin check details:', {
+      userId: supabaseUser.id,
+      email: supabaseUser.email,
+      user_metadata: supabaseUser.user_metadata,
+      app_metadata: supabaseUser.app_metadata,
+      prismaIsAdmin: userData.isAdmin,
+      supabaseIsAdmin: isAdminFromSupabase,
+      finalIsAdmin: isAdminFromSupabase || userData.isAdmin
+    })
 
     return {
       id: userData.id,
       email: userData.email,
-      isAdmin: userData.isAdmin,
-      role: userData.role,
+      isAdmin: isAdminFromSupabase || userData.isAdmin, // Check both sources
+      role: roleFromSupabase,
       permissions: userData.permissions,
       plan: userData.plan,
       searches: userData.searches,
@@ -179,4 +188,38 @@ export async function createOrUpdateUser(supabaseUser: any) {
   })
 
   return userData
+}
+
+export async function updateUserAdminStatus(userId: string, isAdmin: boolean): Promise<boolean> {
+  try {
+    // Update in Prisma database
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        isAdmin,
+        role: isAdmin ? 'admin' : 'user'
+      }
+    })
+
+    // Update Supabase user metadata using admin client
+    const adminClient = await createAdminClient()
+    
+    const { error } = await adminClient.auth.admin.updateUserById(userId, {
+      user_metadata: {
+        isAdmin,
+        role: isAdmin ? 'admin' : 'user'
+      }
+    })
+
+    if (error) {
+      console.error('Error updating Supabase user metadata:', error)
+      return false
+    }
+
+    console.log(`Updated admin status for user ${userId}: isAdmin=${isAdmin}`)
+    return true
+  } catch (error) {
+    console.error('Error updating user admin status:', error)
+    return false
+  }
 }
