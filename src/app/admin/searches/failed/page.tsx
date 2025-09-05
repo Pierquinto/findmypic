@@ -491,7 +491,7 @@ export default function FailedSearches() {
                         <div className="flex items-center">
                           <User className="h-4 w-4 text-slate-400 mr-2" />
                           <div>
-                            <div className="text-sm font-medium text-slate-900">{search.user.email}</div>
+                            <div className="text-sm font-medium text-slate-900">{search.user?.email || 'Utente Anonimo'}</div>
                             {decryptionEnabled && search.decryptedIpAddress && (
                               <div className="text-xs text-slate-500">IP: {search.decryptedIpAddress}</div>
                             )}
@@ -566,7 +566,7 @@ export default function FailedSearches() {
                     <h4 className="font-semibold text-slate-900 mb-2">Informazioni Generali</h4>
                     <div className="space-y-2 text-sm">
                       <div><strong>ID:</strong> {selectedSearch.id}</div>
-                      <div><strong>Utente:</strong> {selectedSearch.user.email}</div>
+                      <div><strong>Utente:</strong> {selectedSearch.user?.email || 'Utente Anonimo'}</div>
                       <div><strong>Tipo:</strong> {selectedSearch.searchType}</div>
                       <div><strong>Data:</strong> {new Date(selectedSearch.createdAt).toLocaleString('it-IT')}</div>
                       <div><strong>Tempo fallimento:</strong> {selectedSearch.searchTime ? `${selectedSearch.searchTime}ms` : 'N/A'}</div>

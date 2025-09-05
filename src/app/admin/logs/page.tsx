@@ -398,7 +398,7 @@ export default function SystemLogs() {
                       {log.user?.email ? (
                         <div className="flex items-center">
                           <User className="h-4 w-4 text-gray-400 mr-2" />
-                          {log.user.email}
+                          {log.user?.email || 'Utente Anonimo'}
                         </div>
                       ) : (
                         <span className="text-gray-500">Sistema</span>

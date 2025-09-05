@@ -101,7 +101,7 @@ export default function UsersManagement() {
           const user = data?.user
           setEditingUser(user)
           setEditForm({
-            email: user.email,
+            email: user.email || '',
             searches: user.searches,
             customSearchLimit: user.customSearchLimit,
             profile: {
@@ -209,7 +209,7 @@ export default function UsersManagement() {
   }
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = (user.email || '').toLowerCase().includes(searchTerm.toLowerCase())
     const matchesPlan = planFilter === 'all' || user.plan === planFilter
     const matchesStatus = statusFilter === 'all' || 
       (statusFilter === 'active' && user.isActive) ||
@@ -402,7 +402,7 @@ export default function UsersManagement() {
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{user.email}</div>
+                      <div className="text-sm font-medium text-gray-900">{user.email || 'Email non disponibile'}</div>
                       <div className="text-sm text-gray-500">ID: {user.id.slice(-8)}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

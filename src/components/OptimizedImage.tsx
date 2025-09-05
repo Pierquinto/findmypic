@@ -78,10 +78,10 @@ export default function ThumbnailImage({
     setHasTriedProxy(false)
     
     // Check if it's an authenticated API endpoint
-    const isAuthenticatedEndpoint = src.startsWith('/api/search-images/') || src.startsWith('/api/proxy-search-image/')
+    const isAuthenticatedEndpoint = src && (src.startsWith('/api/search-images/') || src.startsWith('/api/proxy-search-image/'))
     
     // Check if it's an external URL that might need proxying
-    const isExternalImage = src.startsWith('http://') || src.startsWith('https://')
+    const isExternalImage = src && (src.startsWith('http://') || src.startsWith('https://'))
     const isFromSocialPlatform = isExternalImage && (
       src.includes('facebook.com') ||
       src.includes('instagram.com') ||
@@ -117,7 +117,7 @@ export default function ThumbnailImage({
     console.log('ThumbnailImage error loading:', cleanSrc)
     
     // If this is an authenticated endpoint and direct loading failed, try fetch
-    if ((src.startsWith('/api/search-images/') || src.startsWith('/api/proxy-search-image/')) && !hasTriedProxy) {
+    if (src && (src.startsWith('/api/search-images/') || src.startsWith('/api/proxy-search-image/')) && !hasTriedProxy) {
       console.log('ThumbnailImage direct loading failed, trying fetch for authenticated endpoint:', src)
       setHasTriedProxy(true)
       fetchAuthenticatedImage(src)
@@ -155,7 +155,7 @@ export default function ThumbnailImage({
             {siteName || 'Immagine Ricerca'}
           </h4>
           <p className="text-xs text-gray-500">
-            {(src.startsWith('/api/search-images/') || src.startsWith('/api/proxy-search-image/')) ? 'Caricamento...' : 'Anteprima non disponibile'}
+            {(src && (src.startsWith('/api/search-images/') || src.startsWith('/api/proxy-search-image/'))) ? 'Caricamento...' : 'Anteprima non disponibile'}
           </p>
         </div>
       </div>

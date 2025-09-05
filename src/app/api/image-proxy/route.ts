@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
     const contentType = response.headers.get('content-type') || 'image/jpeg'
     
     // Only allow image content types
-    if (!contentType.startsWith('image/')) {
+    if (!contentType || !contentType.startsWith('image/')) {
       return NextResponse.json({ error: 'Not an image' }, { status: 400 })
     }
 

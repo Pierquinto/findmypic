@@ -276,7 +276,7 @@ export default function SubscriptionsManagement() {
                 {filteredSubscriptions.map((subscription) => (
                   <tr key={subscription.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{subscription.user.email}</div>
+                      <div className="text-sm font-medium text-gray-900">{subscription.user?.email || 'Utente Anonimo'}</div>
                       <div className="text-sm text-gray-500">ID: {subscription.id.slice(-8)}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

@@ -466,7 +466,7 @@ export default function ImagesUploaded() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center">
                         <User className="h-4 w-4 text-slate-400 mr-1" />
-                        <span className="text-sm text-slate-600 truncate">{image.user.email}</span>
+                        <span className="text-sm text-slate-600 truncate">{image.user?.email || 'Utente Anonimo'}</span>
                       </div>
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(image.status)}`}>
                         {image.status}
@@ -553,7 +553,7 @@ export default function ImagesUploaded() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <User className="h-4 w-4 text-slate-400 mr-2" />
-                          <div className="text-sm font-medium text-slate-900">{image.user.email}</div>
+                          <div className="text-sm font-medium text-slate-900">{image.user?.email || 'Utente Anonimo'}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -661,7 +661,7 @@ export default function ImagesUploaded() {
                       <h4 className="font-semibold text-slate-900 mb-3">Informazioni Ricerca</h4>
                       <div className="space-y-2 text-sm">
                         <div><strong>ID:</strong> {selectedImage.id}</div>
-                        <div><strong>Utente:</strong> {selectedImage.user.email}</div>
+                        <div><strong>Utente:</strong> {selectedImage.user?.email || 'Utente Anonimo'}</div>
                         <div><strong>Tipo:</strong> {selectedImage.searchType}</div>
                         <div><strong>Status:</strong> 
                           <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedImage.status)}`}>
