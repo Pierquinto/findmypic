@@ -82,7 +82,7 @@ const authenticatedNavigationItems: NavigationItem[] = [
 ]
 
 export default function ModernNavigation() {
-  const { user, userProfile, loading, signOut } = useAuth()
+  const { user, userProfile, loading, initialCheckDone, signOut } = useAuth()
   const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -102,8 +102,12 @@ export default function ModernNavigation() {
     setMobileMenuOpen(false)
   }, [pathname])
 
-  const isAuthenticated = !loading && user
+  // Use initialCheckDone to show correct navigation immediately
+  const isAuthenticated = initialCheckDone && user
   const navigationItems = isAuthenticated ? authenticatedNavigationItems : publicNavigationItems
+  
+  // Show loading state only if we haven't completed the initial check
+  const showLoadingState = !initialCheckDone
 
   const getCurrentPage = () => {
     if (pathname === '/') return 'Home'
@@ -180,18 +184,26 @@ export default function ModernNavigation() {
             {/* Right Side Actions */}
             <div className="flex items-center space-x-3">
               
-              {/* Notifications (authenticated users only) */}
-              {isAuthenticated && (
-                <button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                    2
-                  </span>
-                </button>
-              )}
+              {/* Show loading skeleton during initial check */}
+              {showLoadingState ? (
+                <div className="flex items-center space-x-3">
+                  <div className="w-20 h-8 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="w-24 h-8 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              ) : (
+                <>
+                  {/* Notifications (authenticated users only) */}
+                  {isAuthenticated && (
+                    <button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                      <Bell className="h-5 w-5" />
+                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                        2
+                      </span>
+                    </button>
+                  )}
 
-              {/* User Menu / Auth Buttons */}
-              {isAuthenticated ? (
+                  {/* User Menu / Auth Buttons */}
+                  {isAuthenticated ? (
                 <div className="relative">
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -271,21 +283,23 @@ export default function ModernNavigation() {
                     </div>
                   )}
                 </div>
-              ) : (
-                <div className="flex items-center space-x-3">
-                  <Link 
-                    href="/login" 
-                    className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
-                  >
-                    Accedi
-                  </Link>
-                  <Link 
-                    href="/register" 
-                    className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
-                  >
-                    Registrati
-                  </Link>
-                </div>
+                  ) : (
+                    <div className="flex items-center space-x-3">
+                      <Link 
+                        href="/login" 
+                        className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                      >
+                        Accedi
+                      </Link>
+                      <Link 
+                        href="/register" 
+                        className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+                      >
+                        Registrati
+                      </Link>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Mobile menu button */}
@@ -302,8 +316,15 @@ export default function ModernNavigation() {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-gray-200 bg-white">
-            <div className="px-4 py-4 space-y-1">
-              {navigationItems.map((item) => {
+            {showLoadingState ? (
+              <div className="px-4 py-4 space-y-2">
+                <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            ) : (
+              <div className="px-4 py-4 space-y-1">
+                {navigationItems.map((item) => {
                 const isActive = isActiveRoute(item.href)
                 return (
                   <Link
@@ -329,9 +350,10 @@ export default function ModernNavigation() {
                       </span>
                     )}
                   </Link>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
       </header>

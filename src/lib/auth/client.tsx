@@ -21,6 +21,7 @@ type AuthContextType = {
   user: User | null
   userProfile: UserProfile | null
   loading: boolean
+  initialCheckDone: boolean
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signUp: (email: string, password: string) => Promise<{ error: any }>
   signOut: () => Promise<void>
@@ -33,6 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [initialCheckDone, setInitialCheckDone] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -61,8 +63,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         profile: {}
       })
       setLoading(false)
+      setInitialCheckDone(true)
       return
     }
+
+    // Check localStorage for cached auth state to show UI immediately
+    const checkCachedAuth = () => {
+      try {
+        const cached = localStorage.getItem('supabase.auth.token')
+        if (cached) {
+          // We have a cached token, assume user is logged in until we verify
+          const cachedData = JSON.parse(cached)
+          if (cachedData && cachedData.access_token) {
+            setInitialCheckDone(true)
+            // We'll let the actual getSession call update the real state
+          }
+        } else {
+          setInitialCheckDone(true)
+        }
+      } catch (error) {
+        setInitialCheckDone(true)
+      }
+    }
+
+    checkCachedAuth()
 
     const getInitialSession = async () => {
       try {
@@ -75,14 +99,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         setUser(session?.user ?? null)
+        setInitialCheckDone(true)
         
         if (session?.user) {
-          await fetchUserProfile(session.user)
+          // Fetch profile asynchronously without blocking
+          fetchUserProfile(session.user)
+        } else {
+          setLoading(false)
         }
-        
-        setLoading(false)
       } catch (error) {
         console.error('Error in getInitialSession:', error)
+        setInitialCheckDone(true)
         setLoading(false)
       }
     }
@@ -95,12 +122,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(session?.user ?? null)
           
           if (session?.user) {
-            await fetchUserProfile(session.user)
+            // Don't wait for profile fetch to complete
+            fetchUserProfile(session.user)
           } else {
             setUserProfile(null)
+            setLoading(false)
           }
-          
-          setLoading(false)
         } catch (error) {
           console.error('Error in auth state change:', error)
           setLoading(false)
@@ -123,8 +150,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const profile = await response.json()
         setUserProfile(profile)
       }
+      // Always set loading to false after profile fetch attempt
+      setLoading(false)
     } catch (error) {
       console.error('Error fetching user profile:', error)
+      // Still set loading to false even on error
+      setLoading(false)
     }
   }
 
@@ -181,6 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     userProfile,
     loading,
+    initialCheckDone,
     signIn,
     signUp,
     signOut,
