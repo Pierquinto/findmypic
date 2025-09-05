@@ -69,6 +69,7 @@ export function useApiRequest() {
             ...defaultOptions.headers,
             'Authorization': `Bearer ${accessToken}`
           }
+          console.log(`[API] Added Authorization header with token: ${accessToken.substring(0, 20)}...`)
         } else {
           console.warn('[API] No access token found through any method')
         }
@@ -89,7 +90,9 @@ export function useApiRequest() {
     
     console.log(`[API] ${options.method || 'GET'} ${url}`, {
       hasAuth: !!mergedOptions.headers?.['Authorization'],
-      credentials: mergedOptions.credentials
+      credentials: mergedOptions.credentials,
+      authHeader: mergedOptions.headers?.['Authorization'] ? 'Bearer ***' : 'Missing',
+      allHeaders: Object.keys(mergedOptions.headers || {})
     })
     
     return fetch(url, mergedOptions)

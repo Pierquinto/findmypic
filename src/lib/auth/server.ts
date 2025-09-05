@@ -67,17 +67,21 @@ export async function getUser(): Promise<User | null> {
       }
     }
     
-    // Fallback to cookies if no valid Authorization header
+    // If no Bearer token auth worked, user is not authenticated
     if (!supabaseUser) {
-      console.log('[AUTH] Fallback to cookie-based authentication')
+      console.log('[AUTH] No valid Bearer token found')
+      
+      // For debugging: still try cookie fallback but don't rely on it in production
       const supabase = await createClient()
       const { data: { user }, error } = await supabase.auth.getUser()
       
       if (error || !user) {
-        console.log('[AUTH] No user found in cookies:', error?.message || 'No user')
+        console.log('[AUTH] Cookie fallback also failed:', error?.message || 'No user')
         return null
       }
-      console.log('[AUTH] Cookie authentication successful, user:', user.email)
+      
+      console.log('[AUTH] Cookie fallback worked, user:', user.email)
+      console.log('[AUTH] WARNING: Relying on cookie auth in production is unreliable')
       supabaseUser = user
     }
 
