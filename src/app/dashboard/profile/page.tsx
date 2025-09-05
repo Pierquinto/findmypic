@@ -36,6 +36,7 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const { user, loading: authLoading  } = useAuth()
+  const apiRequest = useApiRequest()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -57,7 +58,7 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('/api/user/profile')
+      const response = await apiRequest('/api/user/profile')
       if (response.ok) {
         const data = await response.json()
         setProfile(data)
@@ -84,9 +85,8 @@ export default function ProfilePage() {
     setMessage(null)
 
     try {
-      const response = await fetch('/api/user/profile', {
+      const response = await apiRequest('/api/user/profile', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       })
 
@@ -110,7 +110,7 @@ export default function ProfilePage() {
     }
 
     try {
-      const response = await fetch('/api/user/delete-account', {
+      const response = await apiRequest('/api/user/delete-account', {
         method: 'DELETE'
       })
 
