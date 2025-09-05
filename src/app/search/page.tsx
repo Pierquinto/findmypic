@@ -8,6 +8,7 @@ import Link from 'next/link'
 import SearchResults from '@/components/SearchResults'
 import ThumbnailImage from '@/components/OptimizedImage'
 import Breadcrumb from '@/components/Breadcrumb'
+import AnonymousResultsPaywall from '@/components/AnonymousResultsPaywall'
 import { Shield, Upload, Search, AlertTriangle, CheckCircle, Clock, ExternalLink } from 'lucide-react'
 import PaywallModal from '@/components/PaywallModal'
 
@@ -43,6 +44,7 @@ export default function SearchPage() {
   const [showHistory, setShowHistory] = useState(false)
   const [searchHistory, setSearchHistory] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [showAnonymousPaywall, setShowAnonymousPaywall] = useState(false)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -94,6 +96,8 @@ export default function SearchPage() {
           if (response.ok) {
             setResults(data.results)
             setSearchId(data.searchId)
+            // Per utenti anonimi, mostra sempre il paywall dopo la ricerca
+            setShowAnonymousPaywall(true)
           } else {
             alert(data.error || 'Errore durante la ricerca')
             setResults([])
@@ -360,164 +364,146 @@ export default function SearchPage() {
             </div>
           )}
 
-          {/* Results */}
+          {/* Results - Mostra paywall per utenti anonimi, risultati normali per utenti autenticati */}
           {scanComplete && (
-            <div className="bg-white rounded-xl shadow-sm p-8">
-              <div className="flex items-center mb-6">
-                {results.length > 0 ? (
-                  <AlertTriangle className="h-6 w-6 text-red-500 mr-2" />
-                ) : (
-                  <CheckCircle className="h-6 w-6 text-green-500 mr-2" />
-                )}
-                <h3 className="text-xl font-semibold text-gray-900">
-                  Risultati della Scansione
-                </h3>
-              </div>
-
-              {results.length === 0 ? (
-                <div className="text-center py-8">
-                  <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                    Nessuna violazione trovata!
-                  </h4>
-                  <p className="text-gray-600">
-                    La tua immagine non è stata trovata sui siti web scansionati.
-                  </p>
-                  {!user && (
-                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <p className="text-blue-800 text-sm">
-                        <strong>Registrati gratuitamente</strong> per vedere i dettagli completi delle violazioni e accedere a 3 ricerche al mese!
-                      </p>
-                    </div>
-                  )}
-                </div>
+            <>
+              {!user && showAnonymousPaywall ? (
+                <AnonymousResultsPaywall
+                  resultsCount={results.length}
+                  hasViolations={results.length > 0}
+                  searchId={searchId || ''}
+                  onRegister={() => router.push('/register')}
+                />
               ) : (
-                <div>
-                  <SearchResults 
-                    results={results.map(result => ({
-                      id: result.id,
-                      url: result.url,
-                      siteName: result.siteName,
-                      title: result.siteName,
-                      similarity: result.similarity,
-                      status: result.status,
-                      thumbnail: result.thumbnail,
-                      provider: result.provider,
-                      webPageUrl: result.webPageUrl
-                    }))}
-                    userPlan={user ? (user as any)?.plan || 'free' : 'anonymous'}
-                    searchId={searchId || undefined}
-                  />
+                <div className="bg-white rounded-xl shadow-sm p-8">
+                  <div className="flex items-center mb-6">
+                    {results.length > 0 ? (
+                      <AlertTriangle className="h-6 w-6 text-red-500 mr-2" />
+                    ) : (
+                      <CheckCircle className="h-6 w-6 text-green-500 mr-2" />
+                    )}
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      Risultati della Scansione
+                    </h3>
+                  </div>
 
-                  {!user ? (
-                    <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg">
-                      <h4 className="font-semibold text-purple-900 mb-2">
-                        🔓 Sblocca tutti i dettagli
+                  {results.length === 0 ? (
+                    <div className="text-center py-8">
+                      <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                        Nessuna violazione trovata!
                       </h4>
-                      <p className="text-purple-800 text-sm mb-3">
-                        Registrati gratuitamente per vedere le immagini complete, i link diretti e accedere a 3 ricerche al mese!
+                      <p className="text-gray-600">
+                        La tua immagine non è stata trovata sui siti web scansionati.
                       </p>
-                      <div className="flex gap-2">
-                        <Link 
-                          href="/register"
-                          className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-purple-700 transition-colors"
-                        >
-                          Registrati Gratis
-                        </Link>
-                        <Link 
-                          href="/login"
-                          className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-colors"
-                        >
-                          Accedi
-                        </Link>
-                      </div>
                     </div>
                   ) : (
-                    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <h4 className="font-semibold text-blue-900 mb-2">
-                        Cosa puoi fare ora:
-                      </h4>
-                      <ul className="text-blue-800 text-sm space-y-1">
-                        <li>• Contatta i siti web per richiedere la rimozione</li>
-                        <li>• Documenta le violazioni per azioni legali</li>
-                        <li>• Monitora regolarmente con FindMyPic Pro</li>
-                      </ul>
+                    <div>
+                      <SearchResults 
+                        results={results.map(result => ({
+                          id: result.id,
+                          url: result.url,
+                          siteName: result.siteName,
+                          title: result.siteName,
+                          similarity: result.similarity,
+                          status: result.status,
+                          thumbnail: result.thumbnail,
+                          provider: result.provider,
+                          webPageUrl: result.webPageUrl
+                        }))}
+                        userPlan={user ? (user as any)?.plan || 'free' : 'anonymous'}
+                        searchId={searchId || undefined}
+                      />
+
+                      {user && (
+                        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                          <h4 className="font-semibold text-blue-900 mb-2">
+                            Cosa puoi fare ora:
+                          </h4>
+                          <ul className="text-blue-800 text-sm space-y-1">
+                            <li>• Contatta i siti web per richiedere la rimozione</li>
+                            <li>• Documenta le violazioni per azioni legali</li>
+                            <li>• Monitora regolarmente con FindMyPic Pro</li>
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
-              )}
 
-              {/* Data Protection Disclaimer */}
-              <div className="mt-8 bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center">
-                  <Shield className="h-4 w-4 mr-2 text-gray-600" />
-                  Protezione dei Tuoi Dati
-                </h4>
-                <div className="text-xs text-gray-700 space-y-2">
-                  <p>
-                    <strong>Ricerca:</strong> Utilizziamo ricerca inversa automatica su provider terzi specializzati 
-                    e monitoriamo siti noti per leak e contenuti non consensuali.
-                  </p>
-                  <p>
-                    <strong>Privacy:</strong> Tutti i dati di ricerca vengono crittografati nel nostro database 
-                    con cifratura AES-256.
-                  </p>
-                  <p>
-                    <strong>Ritenzione:</strong> {user ? 
-                      (user as any)?.plan === 'free' ? 
-                        'I tuoi dati verranno rimossi automaticamente dopo 6 mesi.' :
-                        'Puoi richiedere la rimozione dei tuoi dati in qualsiasi momento dalla dashboard.'
-                      : 'I dati vengono rimossi automaticamente dopo 6 mesi per utenti free.'
-                    }
-                  </p>
-                  <div className="flex items-center justify-between pt-2">
-                    <Link 
-                      href="/privacy" 
-                      className="text-purple-600 hover:text-purple-700 text-xs underline"
+                  {/* Data Protection Disclaimer */}
+                  <div className="mt-8 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center">
+                      <Shield className="h-4 w-4 mr-2 text-gray-600" />
+                      Protezione dei Tuoi Dati
+                    </h4>
+                    <div className="text-xs text-gray-700 space-y-2">
+                      <p>
+                        <strong>Ricerca:</strong> Utilizziamo ricerca inversa automatica su provider terzi specializzati 
+                        e monitoriamo siti noti per leak e contenuti non consensuali.
+                      </p>
+                      <p>
+                        <strong>Privacy:</strong> Tutti i dati di ricerca vengono crittografati nel nostro database 
+                        con cifratura AES-256.
+                      </p>
+                      <p>
+                        <strong>Ritenzione:</strong> {user ? 
+                          (user as any)?.plan === 'free' ? 
+                            'I tuoi dati verranno rimossi automaticamente dopo 6 mesi.' :
+                            'Puoi richiedere la rimozione dei tuoi dati in qualsiasi momento dalla dashboard.'
+                          : 'I dati vengono rimossi automaticamente dopo 6 mesi per utenti free.'
+                        }
+                      </p>
+                      <div className="flex items-center justify-between pt-2">
+                        <Link 
+                          href="/privacy" 
+                          className="text-purple-600 hover:text-purple-700 text-xs underline"
+                        >
+                          Leggi la Privacy Policy
+                        </Link>
+                        {user && (user as any)?.plan !== 'free' && (
+                          <Link 
+                            href="/dashboard/privacy" 
+                            className="text-purple-600 hover:text-purple-700 text-xs underline"
+                          >
+                            Gestisci i tuoi dati
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 flex items-center justify-center space-x-4">
+                    <button
+                      onClick={() => {
+                        setUploadedFile(null)
+                        setPreviewUrl(null)
+                        setScanComplete(false)
+                        setResults([])
+                        setSearchId(null)
+                        setShowAnonymousPaywall(false)
+                      }}
+                      className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold inline-flex items-center"
                     >
-                      Leggi la Privacy Policy
-                    </Link>
-                    {user && (user as any)?.plan !== 'free' && (
-                      <Link 
-                        href="/dashboard/privacy" 
-                        className="text-purple-600 hover:text-purple-700 text-xs underline"
+                      <Upload className="mr-2 h-5 w-5" />
+                      Nuova Scansione
+                    </button>
+                    
+                    {user && (
+                      <button
+                        onClick={() => {
+                          setShowHistory(true)
+                          loadSearchHistory()
+                        }}
+                        className="bg-gray-100 text-gray-700 px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold inline-flex items-center"
                       >
-                        Gestisci i tuoi dati
-                      </Link>
+                        <Clock className="mr-2 h-5 w-5" />
+                        Cronologia
+                      </button>
                     )}
                   </div>
                 </div>
-              </div>
-
-              <div className="mt-8 flex items-center justify-center space-x-4">
-                <button
-                  onClick={() => {
-                    setUploadedFile(null)
-                    setPreviewUrl(null)
-                    setScanComplete(false)
-                    setResults([])
-                    setSearchId(null)
-                  }}
-                  className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold inline-flex items-center"
-                >
-                  <Upload className="mr-2 h-5 w-5" />
-                  Nuova Scansione
-                </button>
-                
-                {user && (
-                  <button
-                    onClick={() => {
-                      setShowHistory(true)
-                      loadSearchHistory()
-                    }}
-                    className="bg-gray-100 text-gray-700 px-8 py-3 rounded-lg hover:bg-gray-200 transition-colors font-semibold inline-flex items-center"
-                  >
-                    <Clock className="mr-2 h-5 w-5" />
-                    Cronologia
-                  </button>
-                )}
-              </div>
-            </div>
+              )}
+            </>
           )}
 
           {/* Custom Search Banner - Solo dopo i risultati */}

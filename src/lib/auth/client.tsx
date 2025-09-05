@@ -207,12 +207,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`
+      }
     })
     
-    if (!error) {
-      router.push('/login?message=Check your email to confirm your account')
-    }
-    
+    // Don't redirect here anymore, let the register page handle the success state
     return { error }
   }
 
