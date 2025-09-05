@@ -1,161 +1,261 @@
-# FindMyPic - App Reverse Image Search per Privacy
+# 🔍 FindMyPic
 
-FindMyPic è un'app Next.js 14 progettata per aiutare content creator e vittime di revenge porn a trovare le loro foto pubblicate online senza consenso.
+**Proteggi la tua privacy digitale** - Scopri se le tue foto sono state pubblicate online senza il tuo consenso.
 
-## 🚀 Features Implementate
+[![Production Status](https://img.shields.io/badge/Production-✅%20Live-green)](https://www.findmypic.app)
+[![Build Status](https://img.shields.io/badge/Build-✅%20Passing-green)](#)
+[![Auth System](https://img.shields.io/badge/Auth-✅%20Working-green)](#)
 
-### ✅ Core Features
-- **Landing Page** con hero "Proteggi la tua privacy digitale"
-- **Upload Immagini** con drag&drop e preview
-- **Sistema di Ricerca** con simulazione scansione (3 sec delay)
-- **Mock Results** che mostrano violazioni su siti adult/social
-- **Sistema Freemium** (Gratuito: 1 ricerca, Basic: €9.99/mese per 10 ricerche)
-- **Autenticazione** email/password con Supabase Auth
-- **Dashboard Utente** per gestire ricerche e piano
-- **Pricing Page** completa con 3 piani
+**🌐 Live App**: [www.findmypic.app](https://www.findmypic.app)
 
-### 🛠 Stack Tecnologico
-- **Frontend**: Next.js 14, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes, Prisma ORM
-- **Database**: SQLite (locale)
-- **Auth**: Supabase Auth
-- **UI**: Lucide React icons, responsive design
+## 📋 Quick Start
 
-## 🗃 Schema Database (Prisma)
+### For Developers
 
-```prisma
-model User {
-  id       String   @id @default(cuid())
-  email    String   @unique
-  password String
-  plan     String   @default("free")
-  searches Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  Search   Search[]
-}
+1. **Read Documentation First** (CRITICAL):
+   - 📖 [PRODUCTION_SETUP.md](./PRODUCTION_SETUP.md) - Current working configuration
+   - 🔐 [AUTHENTICATION_ARCHITECTURE.md](./AUTHENTICATION_ARCHITECTURE.md) - Auth system details
+   - ✅ [DEVELOPMENT_CHECKLIST.md](./DEVELOPMENT_CHECKLIST.md) - Safe development process
 
-model Search {
-  id        String   @id @default(cuid())
-  userId    String
-  imageUrl  String?
-  results   Json
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-}
-```
-
-## 🎯 Scenari Mock Results
-
-L'app simula 3 scenari realistici:
-
-1. **Scenario Violazioni**: 3 match trovati (adult-site.com, reddit.com, leak-forum.net)
-2. **Scenario Pulito**: Nessuna violazione trovata
-3. **Scenario Match Parziali**: 1 match con somiglianza bassa
-
-## 🏗 Architettura delle Pagine
-
-```
-src/app/
-├── page.tsx              # Landing page con hero e pricing preview
-├── search/page.tsx       # Upload e ricerca immagini
-├── login/page.tsx        # Pagina login con form validazione
-├── register/page.tsx     # Registrazione nuovo utente
-├── dashboard/page.tsx    # Dashboard utente con statistiche
-├── pricing/page.tsx      # Pricing completo con FAQ
-├── layout.tsx           # Layout globale con AuthProvider
-├── providers.tsx        # Supabase AuthProvider
-└── api/
-    ├── auth/
-    │   ├── login/route.ts          # Supabase login handler
-    │   ├── logout/route.ts         # Supabase logout handler
-    │   └── register/route.ts       # Registrazione utente
-    └── search/route.ts             # API ricerca con limiti freemium
-```
-
-## 🔧 Setup e Installazione
-
-1. **Clona e installa dipendenze**:
+2. **Clone & Setup**:
    ```bash
-   git clone <repository>
+   git clone https://github.com/Pierquinto/findmypic.git
    cd findmypic
    npm install
-   ```
-
-2. **Setup database**:
-   ```bash
-   npx prisma generate
-   npx prisma db push
-   ```
-
-3. **Configura variabili ambiente** (già preconfigurate in .env):
-   ```
-   DATABASE_URL="file:./dev.db"
-   NEXT_PUBLIC_SUPABASE_URL="your-supabase-url"
-   NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
-   SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
-   ```
-
-4. **Avvia il server**:
-   ```bash
+   cp .env.example .env.local  # Add your environment variables
    npm run dev
    ```
 
-5. **Visita l'app**: http://localhost:3000
+3. **Always use the checklist** before making changes to avoid breaking production.
 
-## 💼 User Flow Completo
+### For Users
 
-1. **Utente visita landing page** → Vede hero, features, pricing preview
-2. **Click "Verifica Gratis"** → Reindirizzato a /search
-3. **Upload immagine** → Drag&drop o click, preview immediata
-4. **Scansione simulata** → Loading 3 secondi con progress bar
-5. **Risultati mock** → Mostra violazioni trovate o "tutto pulito"
-6. **Conversione freemium** → Limite raggiunto → "Aggiorna piano"
-7. **Registrazione/Login** → Account gratuito o accesso esistente
-8. **Dashboard** → Gestione ricerche, stats, upgrade piano
+1. **Visit**: [www.findmypic.app](https://www.findmypic.app)
+2. **Register** for an account
+3. **Upload** your images
+4. **Search** the web for unauthorized usage
+5. **Protect** your privacy
 
-## 🎨 Design System
+## 🏗️ Architecture
 
-- **Colori**: Purple/Indigo gradient theme
-- **Icone**: Lucide React (Shield, Search, Lock, etc.)
-- **Layout**: Mobile-first responsive
-- **Trust indicators**: Privacy badges, security messaging
-- **Call-to-Actions**: Purple buttons, pricing highlights
+```
+Next.js 15.5.2 (Frontend)
+    ↓
+Vercel (Serverless Hosting)
+    ↓
+Supabase (Auth + PostgreSQL Database)
+    ↓
+Cloudflare R2 (Image Storage)
+    ↓
+Google Vision API (Reverse Image Search)
+```
 
-## 🔒 Sistema Freemium
+## ⚡ Features
 
-- **Free Plan**: 1 ricerca gratuita
-- **Basic Plan**: €9.99/mese, 10 ricerche
-- **Pro Plan**: €19.99/mese, ricerche illimitate
+### ✅ Currently Working
+- 🔐 **User Authentication** (Supabase Auth)
+- 👤 **User Profiles & Management**
+- 📸 **Image Upload** (Cloudflare R2)
+- 🔍 **Reverse Image Search** (Google Vision API)
+- 📊 **Admin Dashboard** 
+- 📱 **Responsive Design**
+- 🛡️ **Route Protection & Role-based Access**
+- 💳 **Subscription Management**
+- 📈 **Usage Analytics**
+- ⚖️ **Violation Detection & Reporting**
 
-La logica è implementata in `/api/search/route.ts` con controlli database.
+### 🔒 Security Features
+- JWT-based authentication
+- Server-side user validation
+- Protected API endpoints
+- Admin-only routes
+- Secure image storage
+- Privacy-first design
 
-## 🧪 Testing e Validazione
+## 🛠️ Tech Stack
 
-L'app è pronta per validation con utenti reali:
-- Form funzionanti
-- Database persistente
-- Session management
-- Freemium limits enforcement
-- Mock results realistici
-- Conversion funnel completo
+### Frontend
+- **Next.js 15.5.2** with Turbopack
+- **React** with TypeScript
+- **Tailwind CSS** for styling
+- **Lucide Icons**
 
-## 🚀 Next Steps
+### Backend
+- **Vercel Serverless Functions**
+- **Prisma ORM**
+- **PostgreSQL** (Supabase)
 
-Per una versione production:
-1. Integrare vera API reverse image search
-2. Implementare pagamenti Stripe
-3. Aggiungere email notifications
-4. Implementare GDPR compliance
-5. Adding monitoring e analytics
-6. Deploy su Vercel/Railway
+### Authentication
+- **Supabase Auth** (JWT-based)
+- **Server-side validation**
+- **Role-based access control**
 
-## 📝 Note di Sicurezza
+### Storage & APIs
+- **Cloudflare R2** (Image storage)
+- **Google Vision API** (Image search)
+- **Supabase** (Database)
 
-- Password gestite da Supabase Auth
-- Session JWT sicure con Supabase
-- Immagini non vengono salvate permanentemente
-- Database locale per development
-- Environment variables per secrets
+## 🚀 Production Status
 
-L'app è stata progettata come MVP completo per dimostrare il concept e validare la domanda di mercato prima di investire nell'integrazione con servizi esterni costosi.
+### ✅ Working Configuration
+- **URL**: https://www.findmypic.app
+- **Database**: ✅ Connected via Vercel-Supabase integration
+- **Authentication**: ✅ Full JWT-based auth system
+- **File Upload**: ✅ Cloudflare R2 integration
+- **Search Engine**: ✅ Google Vision API integration
+- **Admin Panel**: ✅ Role-based admin access
+
+### 📊 Health Checks
+```bash
+# Database connectivity
+curl https://www.findmypic.app/api/debug-supabase-connection
+
+# Authentication system (should return 401 for unauthorized)
+curl https://www.findmypic.app/api/user/profile
+```
+
+## 🔧 Development
+
+### ⚠️ CRITICAL - Read Before Modifying
+
+**This app is LIVE in production**. Before making any changes:
+
+1. **READ**: [DEVELOPMENT_CHECKLIST.md](./DEVELOPMENT_CHECKLIST.md)
+2. **UNDERSTAND**: [PRODUCTION_SETUP.md](./PRODUCTION_SETUP.md) 
+3. **FOLLOW**: The safe development process
+4. **TEST**: Everything locally before deploying
+
+### Local Development Setup
+
+```bash
+# Install dependencies
+npm install
+
+# Setup environment variables
+cp .env.example .env.local
+# Add your Supabase, Google Vision API, and Cloudflare R2 credentials
+
+# Generate Prisma client
+npx prisma generate
+
+# Start development server
+npm run dev
+```
+
+### Environment Variables Required
+
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Database (local development)
+DATABASE_URL=your-postgres-connection-string
+
+# Google Vision API
+GOOGLE_VISION_API_KEY=your-vision-api-key
+
+# Cloudflare R2
+R2_ACCOUNT_ID=your-account-id
+R2_ACCESS_KEY_ID=your-access-key
+R2_SECRET_ACCESS_KEY=your-secret-key
+R2_BUCKET_NAME=your-bucket-name
+R2_PUBLIC_URL=your-public-url
+
+# Encryption
+ENCRYPTION_KEY=your-32-character-encryption-key
+```
+
+### Project Structure
+
+```
+src/
+├── app/                    # Next.js 15 App Router
+│   ├── api/               # API endpoints
+│   ├── admin/             # Admin panel pages
+│   ├── dashboard/         # User dashboard
+│   └── (auth)/            # Auth pages
+├── components/            # Reusable UI components
+├── lib/                   # Core utilities
+│   ├── auth/             # Authentication system
+│   ├── supabase/         # Supabase clients
+│   └── prisma.ts         # Database client
+├── hooks/                # Custom React hooks
+└── utils/                # Helper functions
+
+prisma/
+└── schema.prisma         # Database schema
+
+docs/                     # Documentation
+├── PRODUCTION_SETUP.md
+├── AUTHENTICATION_ARCHITECTURE.md
+└── DEVELOPMENT_CHECKLIST.md
+```
+
+## 🧪 Testing
+
+### Manual Testing Checklist
+- [ ] User registration/login
+- [ ] Image upload functionality  
+- [ ] Reverse image search
+- [ ] Admin panel access (admin users)
+- [ ] User profile management
+- [ ] Subscription system
+- [ ] Responsive design
+
+### API Testing
+```bash
+# Health check
+curl https://www.findmypic.app/api/debug-supabase-connection
+
+# Authentication (should return 401)
+curl https://www.findmypic.app/api/user/profile
+
+# With auth token
+curl -H "Authorization: Bearer YOUR_TOKEN" https://www.findmypic.app/api/user/profile
+```
+
+## 📚 Key Documentation
+
+| Document | Purpose |
+|----------|---------|
+| [PRODUCTION_SETUP.md](./PRODUCTION_SETUP.md) | Complete production configuration & troubleshooting |
+| [AUTHENTICATION_ARCHITECTURE.md](./AUTHENTICATION_ARCHITECTURE.md) | Auth system implementation details |
+| [DEVELOPMENT_CHECKLIST.md](./DEVELOPMENT_CHECKLIST.md) | Safe development & deployment process |
+
+## 🚨 Emergency Procedures
+
+### If Production Breaks
+1. **Check Vercel logs** immediately
+2. **Revert deployment** in Vercel dashboard  
+3. **Investigate** using health check endpoints
+4. **Follow** rollback procedures in development checklist
+
+### Common Issues
+- **401 Errors**: Usually auth config - check [AUTHENTICATION_ARCHITECTURE.md](./AUTHENTICATION_ARCHITECTURE.md)
+- **Database Connection**: Check Vercel-Supabase integration - see [PRODUCTION_SETUP.md](./PRODUCTION_SETUP.md)
+- **Build Failures**: Usually Prisma client - ensure `prisma generate` runs
+
+## 🤝 Contributing
+
+1. **Read all documentation** first
+2. **Create feature branch** - never work on main
+3. **Follow checklist** for all changes
+4. **Test thoroughly** locally
+5. **Use preview deployments** before merging
+6. **Update documentation** if needed
+
+## 📄 License
+
+Proprietary - All rights reserved.
+
+## 📞 Support
+
+- **Documentation**: Check the docs/ folder first
+- **Issues**: Create GitHub issue with full context
+- **Emergency**: Check git history for implementation context
+
+---
+
+**⚠️ Remember**: This is a live production application. All changes must maintain the working status. When in doubt, refer to the documentation and test extensively.**
