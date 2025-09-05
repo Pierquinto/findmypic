@@ -38,13 +38,18 @@ export async function getUser(): Promise<User | null> {
       }
     }
     
+    console.log('[AUTH] Starting getUser() check...')
+    
     // Try to get user from Authorization header first
     const headersList = await headers()
     const authorization = headersList.get('authorization')
     
     let supabaseUser = null
     
+    console.log('[AUTH] Authorization header:', authorization ? 'Present' : 'Missing')
+    
     if (authorization && authorization.startsWith('Bearer ')) {
+      console.log('[AUTH] Using Bearer token authentication')
       // Create admin client for token verification
       const adminClient = await createAdminClient()
       const token = authorization.replace('Bearer ', '')
@@ -52,21 +57,27 @@ export async function getUser(): Promise<User | null> {
       try {
         const { data: { user }, error } = await adminClient.auth.getUser(token)
         if (!error && user) {
+          console.log('[AUTH] Bearer token valid, user:', user.email)
           supabaseUser = user
+        } else {
+          console.log('[AUTH] Bearer token invalid:', error?.message)
         }
       } catch (tokenError) {
-        console.error('Error verifying token:', tokenError)
+        console.error('[AUTH] Error verifying Bearer token:', tokenError)
       }
     }
     
     // Fallback to cookies if no valid Authorization header
     if (!supabaseUser) {
+      console.log('[AUTH] Fallback to cookie-based authentication')
       const supabase = await createClient()
       const { data: { user }, error } = await supabase.auth.getUser()
       
       if (error || !user) {
+        console.log('[AUTH] No user found in cookies:', error?.message || 'No user')
         return null
       }
+      console.log('[AUTH] Cookie authentication successful, user:', user.email)
       supabaseUser = user
     }
 

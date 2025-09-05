@@ -17,6 +17,14 @@ export async function createClient() {
   }
 
   const cookieStore = await cookies()
+  const allCookies = cookieStore.getAll()
+  
+  // Enhanced logging for debugging production issues
+  console.log('[SUPABASE] Creating server client, cookies count:', allCookies.length)
+  const authCookies = allCookies.filter(cookie => 
+    cookie.name.includes('supabase') || cookie.name.includes('auth')
+  )
+  console.log('[SUPABASE] Auth-related cookies found:', authCookies.map(c => c.name))
 
   return createServerClient(
     url,
@@ -28,10 +36,12 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
+            cookiesToSet.forEach(({ name, value, options }) => {
+              console.log('[SUPABASE] Setting cookie:', name, options)
               cookieStore.set(name, value, options)
-            )
-          } catch {
+            })
+          } catch (error) {
+            console.log('[SUPABASE] Could not set cookies (Server Component):', error)
             // The `setAll` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
