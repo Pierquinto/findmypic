@@ -257,6 +257,8 @@ export async function POST(req: NextRequest) {
       // Get the image URL directly from R2
       const imageUrl = searchLogger.getImageUrl()
       
+      console.log('Search API saving imageUrl to database:', imageUrl)
+      
       // Save search record to database
       await prisma.search.create({
         data: {

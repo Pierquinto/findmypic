@@ -74,6 +74,11 @@ export class SearchLogger {
 
       this.imageStoragePath = imageResult.storagePath
       this.imagePublicUrl = imageResult.publicUrl
+      
+      console.log('SearchLogger saved image:', {
+        storagePath: this.imageStoragePath,
+        publicUrl: this.imagePublicUrl
+      })
 
       this.logStep({
         step: 'image_stored',
