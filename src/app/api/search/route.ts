@@ -3,6 +3,7 @@ import { getUser } from '@/lib/auth/server'
 import { prisma } from '@/lib/prisma'
 import { hasSearchesRemaining, getUserMaxSearches, shouldResetSearches } from '@/lib/limits'
 import { GoogleVisionProvider } from '@/lib/search/providers/GoogleVisionProvider'
+import { SearchLogger } from '@/lib/search/searchLogger'
 import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(req: NextRequest) {
@@ -81,6 +82,23 @@ export async function POST(req: NextRequest) {
     // Generate search ID
     const searchId = uuidv4()
     const searchStartTime = Date.now()
+    
+    // Initialize search logger
+    const ipAddress = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
+    const userAgent = req.headers.get('user-agent') || 'unknown'
+    
+    const searchLogger = new SearchLogger(searchId, {
+      searchId,
+      userId: userId || undefined,
+      email: user?.email,
+      imageData,
+      ipAddress,
+      userAgent,
+      searchType
+    })
+    
+    // Save the image to R2 storage
+    await searchLogger.saveProcessedImage()
 
     // Initialize available providers
     const availableProviders: { name: string, provider: any }[] = []
@@ -110,9 +128,49 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Search] Available providers: ${availableProviders.length}`)
 
-    // If no providers available, return empty results
+    // If no providers available, still save the search and return empty results
     if (availableProviders.length === 0) {
       console.log('[Search] No providers available')
+      
+      // Still save search to database
+      try {
+        await prisma.search.create({
+          data: {
+            id: searchId,
+            userId: userId || null,
+            searchType,
+            status: 'completed',
+            resultsCount: 0,
+            searchTime: Date.now() - searchStartTime,
+            providersUsed: {},
+            ipAddress,
+            userAgent,
+            imageUrl: searchLogger.getStats().hasImage ? `/api/search-images/${searchId}` : null
+          }
+        })
+        
+        // Save logs
+        await searchLogger.saveLogs('completed', 0)
+        
+      } catch (dbError) {
+        console.error('Error saving search to database:', dbError)
+        try {
+          await searchLogger.saveLogs('failed', 0)
+        } catch (logError) {
+          console.error('Error saving search log:', logError)
+        }
+      }
+      
+      // Update user search count if authenticated
+      if (user && userId) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            searches: user.searches + 1
+          }
+        })
+      }
+      
       return NextResponse.json({
         searchId,
         results: [],
@@ -191,8 +249,9 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Search] Final results: ${uniqueResults.length}`)
 
-    // Save search to database (simplified without encryption for now)
+    // Save search to database using the search logger
     try {
+      // Save search record to database
       await prisma.search.create({
         data: {
           id: searchId,
@@ -202,12 +261,33 @@ export async function POST(req: NextRequest) {
           resultsCount: uniqueResults.length,
           searchTime,
           providersUsed: providersUsed.reduce((acc, p) => { acc[p] = true; return acc }, {}),
-          ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
-          userAgent: req.headers.get('user-agent') || 'unknown'
+          ipAddress,
+          userAgent,
+          // Get the image storage path from the logger
+          imageUrl: searchLogger.getStats().hasImage ? `/api/search-images/${searchId}` : null
         }
       })
+      
+      // Log the providers used
+      for (const providerName of providersUsed) {
+        searchLogger.logProviderSearch(providerName, true, [], undefined, 1)
+      }
+      
+      for (const providerName of providersFailures) {
+        searchLogger.logProviderSearch(providerName, false, [], 'Provider failed', 1)
+      }
+      
+      // Save detailed logs
+      await searchLogger.saveLogs('completed', uniqueResults.length)
+      
     } catch (dbError) {
       console.error('Error saving search to database:', dbError)
+      // Try to log the failure
+      try {
+        await searchLogger.saveLogs('failed', 0)
+      } catch (logError) {
+        console.error('Error saving search log:', logError)
+      }
       // Continue anyway - don't fail the search because of DB issues
     }
 
