@@ -74,6 +74,8 @@ export default function ThumbnailImage({
       return
     }
 
+    console.log('OptimizedImage loading src:', src)
+
     // Reset state when src changes
     setHasTriedProxy(false)
     

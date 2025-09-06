@@ -39,7 +39,7 @@ export async function GET(
       const allUserSearches = await prisma.search.findMany({
         where: {
           user: {
-            email: session.user.email
+            email: user.email
           }
         },
         select: {
@@ -60,7 +60,7 @@ export async function GET(
     // Format the response with proper SearchResult objects
     const response = {
       searchId: search.id,
-      imageUrl: search.imageUrl || (search.encryptedImagePath ? `/api/proxy-search-image/${search.id}` : null),
+      imageUrl: search.imageUrl, // Usa direttamente l'URL pubblico R2
       searchType: search.searchType,
       resultsCount: search.resultsCount,
       searchTime: search.searchTime,
