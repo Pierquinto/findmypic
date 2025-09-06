@@ -81,6 +81,13 @@ export default function HistoryPage() {
       if (response.ok) {
         const data = await response.json()
         
+        // Debug: log degli URL delle immagini
+        console.log('Search history data:', data.searches.map(s => ({ 
+          id: s.id, 
+          imageUrl: s.imageUrl,
+          hasImage: !!s.imageUrl
+        })))
+        
         if (pagination.offset === 0) {
           setSearches(data.searches)
         } else {

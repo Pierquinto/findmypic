@@ -116,7 +116,7 @@ export default function ThumbnailImage({
   }, [src])
 
   const handleError = () => {
-    console.log('ThumbnailImage error loading:', cleanSrc)
+    console.log('ThumbnailImage error loading:', cleanSrc, 'Original src:', src)
     
     // If this is an authenticated endpoint and direct loading failed, try fetch
     if (src && (src.startsWith('/api/search-images/') || src.startsWith('/api/proxy-search-image/')) && !hasTriedProxy) {
