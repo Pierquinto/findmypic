@@ -134,6 +134,9 @@ export async function POST(req: NextRequest) {
       
       // Still save search to database
       try {
+        // Get the image URL directly from R2
+        const imageUrl = searchLogger.getImageUrl()
+        
         await prisma.search.create({
           data: {
             id: searchId,
@@ -145,7 +148,7 @@ export async function POST(req: NextRequest) {
             providersUsed: {},
             ipAddress,
             userAgent,
-            imageUrl: searchLogger.getStats().hasImage ? `/api/search-images/${searchId}` : null
+            imageUrl // Save the public R2 URL directly
           }
         })
         
@@ -251,6 +254,9 @@ export async function POST(req: NextRequest) {
 
     // Save search to database using the search logger
     try {
+      // Get the image URL directly from R2
+      const imageUrl = searchLogger.getImageUrl()
+      
       // Save search record to database
       await prisma.search.create({
         data: {
@@ -263,8 +269,7 @@ export async function POST(req: NextRequest) {
           providersUsed: providersUsed.reduce((acc, p) => { acc[p] = true; return acc }, {}),
           ipAddress,
           userAgent,
-          // Get the image storage path from the logger
-          imageUrl: searchLogger.getStats().hasImage ? `/api/search-images/${searchId}` : null
+          imageUrl // Save the public R2 URL directly
         }
       })
       

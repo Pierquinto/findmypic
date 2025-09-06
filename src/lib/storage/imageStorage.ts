@@ -83,6 +83,7 @@ export class ImageStorage {
       
       return {
         storagePath: filename, // Restituisce il path R2
+        publicUrl, // Aggiungi l'URL pubblico
         imageHash,
         metadata: completeMetadata
       }

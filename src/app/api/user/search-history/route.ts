@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     // Prepara i risultati per il frontend usando la nuova struttura
     const searchHistory = searches.map(search => ({
       id: search.id,
-      imageUrl: search.imageUrl || (search.encryptedImagePath ? `/api/proxy-search-image/${search.id}` : null),
+      imageUrl: search.imageUrl, // Usa direttamente l'URL pubblico R2
       searchType: search.searchType,
       resultsCount: search._count.results, // Usa il count reale dalla relazione
       searchTime: search.searchTime,

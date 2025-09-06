@@ -43,6 +43,7 @@ export class SearchLogger {
   private providersFailed: { provider: string, error: string }[] = []
   private totalApiCalls: number = 0
   private imageStoragePath?: string
+  private imagePublicUrl?: string
 
   constructor(searchId: string, logData: SearchLogData) {
     this.searchId = searchId
@@ -72,6 +73,7 @@ export class SearchLogger {
       )
 
       this.imageStoragePath = imageResult.storagePath
+      this.imagePublicUrl = imageResult.publicUrl
 
       this.logStep({
         step: 'image_stored',
@@ -274,6 +276,20 @@ export class SearchLogger {
     
     const mimeMatch = imageData.match(/^data:(image\/[a-z]+);base64,/)
     return mimeMatch ? mimeMatch[1] : 'image/jpeg'
+  }
+
+  /**
+   * Ottieni il path dell'immagine salvata
+   */
+  getImagePath(): string | null {
+    return this.imageStoragePath || null
+  }
+
+  /**
+   * Ottieni l'URL pubblico dell'immagine salvata
+   */
+  getImageUrl(): string | null {
+    return this.imagePublicUrl || null
   }
 
   /**
